@@ -14,17 +14,103 @@ import java.util.concurrent.BlockingQueue;
 public class DBConnection {
     // Database configuration from environment variables
     private static final String JDBC_DRIVER = "org.postgresql.Driver";
-    private static final String DB_URL = System.getenv("DATABASE_URL");
-    private static final String USER = System.getenv("PGUSER");
-    private static final String PASSWORD = System.getenv("PGPASSWORD");
-    private static final String HOST = System.getenv("PGHOST");
-    private static final String PORT = System.getenv("PGPORT");
-    private static final String DATABASE = System.getenv("PGDATABASE");
     
     // Connection pool properties
     private static final int POOL_SIZE = 5;
     private static final BlockingQueue<Connection> connectionPool = new ArrayBlockingQueue<>(POOL_SIZE);
     private static boolean initialized = false;
+    
+    /**
+     * Build a JDBC connection URL from the environment variables
+     */
+    private static String buildConnectionUrl() {
+        try {
+            // Get database URL from environment
+            String dbUrl = System.getenv("DATABASE_URL");
+            
+            if (dbUrl != null && !dbUrl.isEmpty()) {
+                // Database URL in format postgresql://username:password@host:port/database?params
+                if (dbUrl.startsWith("postgresql://")) {
+                    // Extract credentials and host info
+                    String noPrefix = dbUrl.substring("postgresql://".length());
+                    int atIndex = noPrefix.indexOf('@');
+                    
+                    if (atIndex > 0) {
+                        // Get credentials part (username:password)
+                        String credentials = noPrefix.substring(0, atIndex);
+                        // Get host part (host:port/database?params)
+                        String hostPart = noPrefix.substring(atIndex + 1);
+                        
+                        // Extract username and password
+                        String[] credentialParts = credentials.split(":");
+                        String username = credentialParts[0];
+                        String password = credentialParts.length > 1 ? credentialParts[1] : "";
+                        
+                        return "jdbc:postgresql://" + hostPart;
+                    }
+                }
+            }
+            
+            // If DATABASE_URL is not available or not in the expected format,
+            // build from individual environment variables
+            String host = System.getenv("PGHOST");
+            String port = System.getenv("PGPORT");
+            String database = System.getenv("PGDATABASE");
+            
+            if (host != null && port != null && database != null) {
+                return "jdbc:postgresql://" + host + ":" + port + "/" + database;
+            }
+            
+            throw new IllegalStateException("Cannot build database URL: missing environment variables");
+        } catch (Exception e) {
+            System.err.println("Error building database URL: " + e.getMessage());
+            throw new RuntimeException("Failed to build database connection URL", e);
+        }
+    }
+    
+    /**
+     * Get database credentials from environment variables
+     */
+    private static Properties getConnectionProps() {
+        Properties props = new Properties();
+        
+        // Get database URL from environment
+        String dbUrl = System.getenv("DATABASE_URL");
+        
+        if (dbUrl != null && !dbUrl.isEmpty() && dbUrl.startsWith("postgresql://")) {
+            // Extract credentials from URL
+            String noPrefix = dbUrl.substring("postgresql://".length());
+            int atIndex = noPrefix.indexOf('@');
+            
+            if (atIndex > 0) {
+                // Get credentials part (username:password)
+                String credentials = noPrefix.substring(0, atIndex);
+                
+                // Extract username and password
+                String[] credentialParts = credentials.split(":");
+                String username = credentialParts[0];
+                String password = credentialParts.length > 1 ? credentialParts[1] : "";
+                
+                props.setProperty("user", username);
+                props.setProperty("password", password);
+                return props;
+            }
+        }
+        
+        // If we can't extract from DATABASE_URL, use individual environment variables
+        String username = System.getenv("PGUSER");
+        String password = System.getenv("PGPASSWORD");
+        
+        if (username != null) {
+            props.setProperty("user", username);
+        }
+        
+        if (password != null) {
+            props.setProperty("password", password);
+        }
+        
+        return props;
+    }
     
     /**
      * Initializes the connection pool by creating and adding connections
@@ -38,18 +124,12 @@ public class DBConnection {
             // Register JDBC driver
             Class.forName(JDBC_DRIVER);
             
-            // Create connection properties
-            Properties props = new Properties();
-            props.setProperty("user", USER);
-            props.setProperty("password", PASSWORD);
+            // Build the connection URL
+            String url = buildConnectionUrl();
+            System.out.println("Connecting to database with URL: " + url);
             
-            String url = DB_URL;
-            if (url == null || url.isEmpty()) {
-                // Build URL from components if DATABASE_URL is not available
-                url = "jdbc:postgresql://" + HOST + ":" + PORT + "/" + DATABASE;
-            }
-            
-            System.out.println("Connecting to database at: " + url);
+            // Get connection properties (credentials)
+            Properties props = getConnectionProps();
             
             // Initialize the connection pool
             for (int i = 0; i < POOL_SIZE; i++) {
@@ -58,6 +138,7 @@ public class DBConnection {
             }
             
             initialized = true;
+            System.out.println("Database connection pool initialized successfully.");
         } catch (ClassNotFoundException e) {
             System.err.println("JDBC Driver not found: " + e.getMessage());
             throw new RuntimeException("JDBC Driver not found", e);
@@ -83,16 +164,8 @@ public class DBConnection {
             
             // If pool is empty, create a new connection
             if (conn == null || conn.isClosed()) {
-                Properties props = new Properties();
-                props.setProperty("user", USER);
-                props.setProperty("password", PASSWORD);
-                
-                String url = DB_URL;
-                if (url == null || url.isEmpty()) {
-                    // Build URL from components if DATABASE_URL is not available
-                    url = "jdbc:postgresql://" + HOST + ":" + PORT + "/" + DATABASE;
-                }
-                
+                String url = buildConnectionUrl();
+                Properties props = getConnectionProps();
                 return DriverManager.getConnection(url, props);
             }
             
