@@ -63,6 +63,55 @@ public class AnswerDAO {
     }
     
     /**
+     * Creates a new answer in the database
+     * 
+     * @param answer The Answer object to create
+     * @return true if successful, false otherwise
+     * @throws SQLException If a database error occurs
+     */
+    public boolean createAnswer(Answer answer) throws SQLException {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DBConnection.getConnection();
+            
+            String sql = "INSERT INTO answers (question_id, user_id, content, upvotes, is_accepted, is_anonymous) " +
+                         "VALUES (?, ?, ?, ?, ?, ?)";
+            
+            pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            pstmt.setInt(1, answer.getQuestionId());
+            pstmt.setInt(2, answer.getUserId());
+            pstmt.setString(3, answer.getContent());
+            pstmt.setInt(4, answer.getUpvotes());
+            pstmt.setBoolean(5, answer.isAccepted());
+            pstmt.setBoolean(6, answer.isAnonymous());
+            
+            int affectedRows = pstmt.executeUpdate();
+            
+            if (affectedRows == 0) {
+                return false;
+            }
+            
+            rs = pstmt.getGeneratedKeys();
+            if (rs.next()) {
+                // Set the generated ID back to the answer object
+                answer.setId(rs.getInt(1));
+                return true;
+            } else {
+                return false;
+            }
+            
+        } finally {
+            // Close resources
+            if (rs != null) rs.close();
+            if (pstmt != null) pstmt.close();
+            if (conn != null) DBConnection.releaseConnection(conn);
+        }
+    }
+    
+    /**
      * Submits a new answer to a question
      * 
      * @param answer The Answer object to submit

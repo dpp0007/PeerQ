@@ -17,6 +17,56 @@ import java.util.List;
 public class QuestionDAO {
     
     /**
+     * Creates a new question in the database
+     * 
+     * @param question The Question object to create
+     * @return true if successful, false otherwise
+     * @throws SQLException If a database error occurs
+     */
+    public boolean createQuestion(Question question) throws SQLException {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DBConnection.getConnection();
+            
+            String sql = "INSERT INTO questions (title, body, tags, user_id, is_solved, category, is_anonymous) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            
+            pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            pstmt.setString(1, question.getTitle());
+            pstmt.setString(2, question.getBody());
+            pstmt.setString(3, question.getTags());
+            pstmt.setInt(4, question.getUserId());
+            pstmt.setBoolean(5, question.isSolved());
+            pstmt.setString(6, question.getCategory());
+            pstmt.setBoolean(7, question.isAnonymous());
+            
+            int affectedRows = pstmt.executeUpdate();
+            
+            if (affectedRows == 0) {
+                return false;
+            }
+            
+            rs = pstmt.getGeneratedKeys();
+            if (rs.next()) {
+                // Set the generated ID back to the question object
+                question.setId(rs.getInt(1));
+                return true;
+            } else {
+                return false;
+            }
+            
+        } finally {
+            // Close resources
+            if (rs != null) rs.close();
+            if (pstmt != null) pstmt.close();
+            if (conn != null) DBConnection.releaseConnection(conn);
+        }
+    }
+    
+    /**
      * Adds a new question to the database
      * 
      * @param question The Question object to add

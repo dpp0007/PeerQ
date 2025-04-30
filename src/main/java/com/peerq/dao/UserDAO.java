@@ -269,4 +269,129 @@ public class UserDAO {
             }
         }
     }
+    
+    /**
+     * Authenticates a user with email and password
+     * 
+     * @param email User's email
+     * @param password User's password
+     * @return User object if authentication successful, null otherwise
+     * @throws SQLException If a database error occurs
+     */
+    public User authenticateUser(String email, String password) throws SQLException {
+        // This method is similar to validateLogin but throws exceptions
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DBConnection.getConnection();
+            
+            String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, email);
+            pstmt.setString(2, password); // In production, this should compare with hashed password
+            
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                // Authentication successful, create and return user object
+                User user = new User();
+                user.setId(rs.getInt("id"));
+                user.setName(rs.getString("name"));
+                user.setEmail(rs.getString("email"));
+                user.setPassword(rs.getString("password"));
+                user.setReputation(rs.getInt("reputation"));
+                user.setAdmin(rs.getBoolean("is_admin"));
+                user.setCreatedAt(rs.getString("created_at"));
+                
+                return user;
+            } else {
+                // Authentication failed
+                return null;
+            }
+            
+        } finally {
+            // Close resources
+            if (rs != null) rs.close();
+            if (pstmt != null) pstmt.close();
+            if (conn != null) DBConnection.releaseConnection(conn);
+        }
+    }
+    
+    /**
+     * Retrieve a user by their email address
+     * 
+     * @param email The email to look up
+     * @return User object if found, null otherwise
+     * @throws SQLException If a database error occurs
+     */
+    public User getUserByEmail(String email) throws SQLException {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        
+        try {
+            conn = DBConnection.getConnection();
+            
+            String sql = "SELECT * FROM users WHERE email = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, email);
+            
+            rs = pstmt.executeQuery();
+            
+            if (rs.next()) {
+                User user = new User();
+                user.setId(rs.getInt("id"));
+                user.setName(rs.getString("name"));
+                user.setEmail(rs.getString("email"));
+                user.setPassword(rs.getString("password"));
+                user.setReputation(rs.getInt("reputation"));
+                user.setAdmin(rs.getBoolean("is_admin"));
+                user.setCreatedAt(rs.getString("created_at"));
+                
+                return user;
+            } else {
+                return null;
+            }
+            
+        } finally {
+            // Close resources
+            if (rs != null) rs.close();
+            if (pstmt != null) pstmt.close();
+            if (conn != null) DBConnection.releaseConnection(conn);
+        }
+    }
+    
+    /**
+     * Creates a new user in the database
+     * 
+     * @param user The User object to create
+     * @return true if successful, false otherwise
+     * @throws SQLException If a database error occurs
+     */
+    public boolean createUser(User user) throws SQLException {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        
+        try {
+            conn = DBConnection.getConnection();
+            
+            String sql = "INSERT INTO users (name, email, password, reputation, is_admin) VALUES (?, ?, ?, ?, ?)";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, user.getName());
+            pstmt.setString(2, user.getEmail());
+            pstmt.setString(3, user.getPassword()); // In production, this should be hashed
+            pstmt.setInt(4, user.getReputation());
+            pstmt.setBoolean(5, user.isAdmin());
+            
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+            
+        } finally {
+            // Close resources
+            if (pstmt != null) pstmt.close();
+            if (conn != null) DBConnection.releaseConnection(conn);
+        }
+    }
 }
