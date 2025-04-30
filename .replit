@@ -1,0 +1,9 @@
+modules = ["java"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+
+[deployment]
+run = ["sh", "-c", "cd src && javac -d ../bin com/peerq/Main.java && cd .. && java -cp bin com.peerq.Main"]
