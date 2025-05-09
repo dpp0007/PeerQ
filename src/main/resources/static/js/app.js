@@ -489,8 +489,8 @@ function setupEventListeners() {
         }
         
         // Validate email domain
-        if (!email.endsWith('.edu')) {
-            showNotification('Registration requires a .edu email address', 'error');
+        if (!email.endsWith('galgotiasuniversity.ac.in')) {
+            showNotification('Registration requires a Galgotias University email address', 'error');
             return;
         }
         
