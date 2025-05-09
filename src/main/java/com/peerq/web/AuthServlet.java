@@ -105,9 +105,9 @@ public class AuthServlet extends HttpServlet {
         String email = requestBody.get("email").getAsString();
         String password = requestBody.get("password").getAsString();
         
-        // Validate email domain (must be a college email)
-        if (!email.endsWith(".edu")) {
-            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Registration requires a .edu email address");
+        // Validate email domain (must be a Galgotias University email)
+        if (!email.endsWith("galgotiasuniversity.ac.in")) {
+            sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Registration requires a Galgotias University email address");
             return;
         }
         

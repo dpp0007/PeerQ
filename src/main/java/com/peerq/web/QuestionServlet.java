@@ -34,10 +34,21 @@ public class QuestionServlet extends HttpServlet {
         
         String pathInfo = request.getPathInfo();
         
-        // Get all questions
+        // Get all questions or filter by category
         if (pathInfo == null || pathInfo.equals("/")) {
             try {
-                List<Question> questions = questionDAO.getAllQuestions();
+                // Check if category parameter is provided
+                String category = request.getParameter("category");
+                List<Question> questions;
+                
+                if (category != null && !category.isEmpty()) {
+                    // Get questions by category
+                    questions = questionDAO.getQuestionsByCategory(category);
+                } else {
+                    // Get all questions
+                    questions = questionDAO.getAllQuestions();
+                }
+                
                 sendJsonResponse(response, HttpServletResponse.SC_OK, gson.toJson(questions));
             } catch (Exception e) {
                 e.printStackTrace();

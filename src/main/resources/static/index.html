@@ -52,9 +52,9 @@
                             <input type="text" id="register-name" name="name" required>
                         </div>
                         <div class="form-group">
-                            <label for="register-email">College Email</label>
+                            <label for="register-email">Galgotias University Email</label>
                             <input type="email" id="register-email" name="email" required>
-                            <small>Must be a .edu email address</small>
+                            <small>Must end with galgotiasuniversity.ac.in</small>
                         </div>
                         <div class="form-group">
                             <label for="register-password">Password</label>
@@ -109,12 +109,7 @@
                     <div class="form-group">
                         <textarea id="answer-content" name="content" rows="6" required></textarea>
                     </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="answer-anonymous" name="isAnonymous">
-                            Post anonymously
-                        </label>
-                    </div>
+                    <!-- Removed anonymous posting option -->
                     <div class="form-group">
                         <button type="submit" class="btn btn-primary">Submit Answer</button>
                     </div>
@@ -151,12 +146,7 @@
                     <label for="question-tags">Tags (optional, comma separated)</label>
                     <input type="text" id="question-tags" name="tags">
                 </div>
-                <div class="form-group">
-                    <label>
-                        <input type="checkbox" id="question-anonymous" name="isAnonymous">
-                        Post anonymously
-                    </label>
-                </div>
+                <!-- Removed anonymous posting option -->
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">Post Question</button>
                 </div>

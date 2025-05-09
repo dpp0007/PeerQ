@@ -329,13 +329,12 @@ function renderQuestions(questions) {
         <div class="question-card" data-question-id="${question.id}">
             <h3 class="question-title">${question.title}</h3>
             <div class="question-meta">
-                <span>${question.anonymous ? 'Anonymous' : question.userName}</span>
+                <span>${question.userName || 'User'}</span>
                 <span>${formatDate(question.createdAt)}</span>
             </div>
             <span class="question-category">${formatCategory(question.category)}</span>
             <div class="question-stats">
                 <span>${question.answerCount || 0} answers</span>
-                <span>${question.voteCount || 0} votes</span>
             </div>
             ${question.tags ? `
                 <div class="question-tags">
@@ -365,7 +364,7 @@ function renderQuestionDetail(question, answers) {
             <h2 class="question-detail-title">${question.title}</h2>
             <div class="question-detail-content">${question.body}</div>
             <div class="question-detail-footer">
-                <span class="question-author">${question.anonymous ? 'Anonymous' : question.userName}</span>
+                <span class="question-author">${question.userName || 'User'}</span>
                 <span class="question-date">${formatDate(question.createdAt)}</span>
             </div>
         </div>
@@ -379,7 +378,7 @@ function renderQuestionDetail(question, answers) {
                 <div class="answer-card">
                     <div class="answer-content">${answer.content}</div>
                     <div class="answer-footer">
-                        <span class="answer-author">${answer.anonymous ? 'Anonymous' : answer.userName}</span>
+                        <span class="answer-author">${answer.userName || 'User'}</span>
                         <span class="answer-date">${formatDate(answer.createdAt)}</span>
                     </div>
                 </div>
@@ -523,7 +522,7 @@ function setupEventListeners() {
             body: document.getElementById('question-body').value,
             category: document.getElementById('question-category').value,
             tags: document.getElementById('question-tags').value,
-            isAnonymous: document.getElementById('question-anonymous').checked
+            isAnonymous: false // Anonymous posting removed
         };
         
         submitQuestion(questionData).catch(error => console.error('Submit question error:', error));
@@ -546,7 +545,7 @@ function setupEventListeners() {
         
         const answerData = {
             content: document.getElementById('answer-content').value,
-            isAnonymous: document.getElementById('answer-anonymous').checked
+            isAnonymous: false // Anonymous posting removed
         };
         
         submitAnswer(state.currentQuestion.id, answerData).catch(error => console.error('Submit answer error:', error));
