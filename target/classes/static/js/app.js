@@ -138,19 +138,13 @@ async function register(name, email, password) {
         const data = await fetchAPI('/api/auth/register', 'POST', { name, email, password });
         
         if (data.success) {
-            state.user = {
-                id: data.userId,
-                name: data.userName,
-                email: email,
-                isAdmin: false
-            };
+            // Remove saving user to state and localStorage
+            state.user = null;
+            localStorage.removeItem('peerqUser');
             
-            // Save user to localStorage
-            localStorage.setItem('peerqUser', JSON.stringify(state.user));
-            
-            updateAuthUI();
-            hideAuthForms();
-            showNotification('Registered successfully!', 'success');
+            // Show login form instead of hiding auth forms
+            showLoginForm();
+            showNotification('Registered successfully! Please log in with your credentials.', 'success');
         }
         
         return data;
@@ -488,8 +482,8 @@ function setupEventListeners() {
         }
         
         // Validate email domain
-        if (!email.endsWith('galgotiasuniversity.ac.in')) {
-            showNotification('Registration requires a Galgotias University email address', 'error');
+        if (!email.endsWith('@galgotiasuniversity.ac.in')) {
+            showNotification('Please use a valid Galgotias University email address (@galgotiasuniversity.ac.in)', 'error');
             return;
         }
         

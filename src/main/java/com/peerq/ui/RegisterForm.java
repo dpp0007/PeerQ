@@ -25,7 +25,7 @@ public class RegisterForm extends JFrame {
     
     // Email validation pattern
     private static final Pattern EMAIL_PATTERN = 
-            Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$");
+            Pattern.compile("^[A-Za-z0-9._%+-]+@galgotiasuniversity\\.ac\\.in$");
     
     /**
      * Constructor that initializes the registration form
@@ -224,12 +224,7 @@ public class RegisterForm extends JFrame {
                 }
                 
                 if (!EMAIL_PATTERN.matcher(email).matches()) {
-                    errorLabel.setText("Please enter a valid email address.");
-                    return;
-                }
-                
-                if (!email.endsWith(".edu")) {
-                    errorLabel.setText("Please use a college email (.edu domain).");
+                    errorLabel.setText("Please use a valid Galgotias University email address (@galgotiasuniversity.ac.in).");
                     return;
                 }
                 

@@ -1,0 +1,2 @@
+Connecting to database with URL: jdbc:postgresql://ep-empty-field-a4g657u3.us-east-1.aws.neon.tech/neondb?sslmode=require
+Database connection pool initialized successfully.
