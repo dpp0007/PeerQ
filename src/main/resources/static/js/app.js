@@ -403,8 +403,18 @@ function showSection(section) {
     elements.questionDetail.classList.add('hidden');
     elements.askQuestion.classList.add('hidden');
     
-    // Show the requested section
+    // Show the selected section
     section.classList.remove('hidden');
+    section.classList.add('active');
+    
+    // Update navigation highlighting
+    const navLinks = document.querySelectorAll('#main-nav a');
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.section === section.id) {
+            link.classList.add('active');
+        }
+    });
 }
 
 function showLoginForm() {
@@ -457,6 +467,23 @@ function formatCategory(category) {
 
 // Event Listeners
 function setupEventListeners() {
+    // Navigation links
+    document.querySelectorAll('#main-nav a').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sectionId = this.dataset.section;
+            if (sectionId) {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    showSection(section);
+                    if (sectionId === 'question-list') {
+                        loadQuestions(); // Reload questions when navigating to home
+                    }
+                }
+            }
+        });
+    });
+    
     // Auth forms
     elements.loginFormElement.addEventListener('submit', function(e) {
         e.preventDefault();

@@ -1,23 +1,23 @@
 /* Base Styles - Modern Reddit-like UI */
 :root {
-    --primary-color: #0079d3;
-    --primary-hover: #0061a9;
-    --secondary-color: #f6f7f8;
-    --text-color: #1c1c1c;
-    --text-color-light: #787c7e;
-    --border-color: #edeff1;
-    --background-color: #dae0e6;
-    --card-background: #ffffff;
-    --success-color: #46d160;
-    --error-color: #ff4500;
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --primary-color: #1e88e5;
+    --primary-hover: #1976d2;
+    --secondary-color: #2d2d2d;
+    --text-color: #e6e6e6;
+    --text-color-light: #aaaaaa;
+    --border-color: #3d3d3d;
+    --background-color: #1a1a1a;
+    --card-background: #2d2d2d;
+    --success-color: #43a047;
+    --error-color: #e53935;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     --card-radius: 4px;
-    --header-background: #ffffff;
-    --vote-button-background: #f8f9fa;
-    --upvote-color: #ff4500;
-    --downvote-color: #7193ff;
-    --tag-background: #f6f7f8;
-    --tag-color: #5d676f;
+    --header-background: #212121;
+    --vote-button-background: #333333;
+    --upvote-color: #ff5722;
+    --downvote-color: #2196f3;
+    --tag-background: #333333;
+    --tag-color: #b0bec5;
 }
 
 * {
@@ -102,11 +102,15 @@ header {
 }
 
 .logo {
-    color: var(--primary-color);
-    font-size: 1.5rem;
-    font-weight: 700;
     display: flex;
     align-items: center;
+    margin-right: 15px;
+}
+
+.logo img {
+    height: 36px;
+    width: auto;
+    max-width: 120px;
 }
 
 nav ul {
@@ -264,7 +268,18 @@ select {
     border-radius: 4px;
     font-size: 0.95rem;
     background-color: var(--secondary-color);
+    color: var(--text-color);
     transition: all 0.15s ease;
+}
+
+select option {
+    color: var(--text-color);
+    background-color: var(--secondary-color);
+}
+
+/* Style for the placeholder option in selects */
+select option[value=""] {
+    color: var(--text-color);
 }
 
 input:focus,
@@ -272,7 +287,6 @@ textarea:focus,
 select:focus {
     outline: none;
     border-color: var(--primary-color);
-    background-color: white;
     box-shadow: 0 0 0 2px rgba(0, 121, 211, 0.2);
 }
 
