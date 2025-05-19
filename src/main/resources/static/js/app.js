@@ -1,18 +1,23 @@
-// Global state
+/**
+ * PeerQ - College Community Platform
+ * Main JavaScript application file
+ */
+
+// Global state object - stores application data
 const state = {
-    user: null,
-    currentQuestion: null,
-    questions: []
+    user: null,              // Current logged-in user information
+    currentQuestion: null,   // Currently viewed question details
+    questions: []            // List of questions for the main view
 };
 
-// DOM elements
+// DOM element references - cached for performance
 const elements = {
-    // Navigation
+    // Navigation elements
     mainNav: document.getElementById('main-nav'),
     authSection: document.getElementById('auth-section'),
     askQuestionBtn: document.getElementById('ask-question-btn'),
     
-    // Sections
+    // Section containers
     authForms: document.getElementById('auth-forms'),
     loginForm: document.getElementById('login-form'),
     registerForm: document.getElementById('register-form'),
@@ -20,50 +25,62 @@ const elements = {
     questionDetail: document.getElementById('question-detail'),
     askQuestion: document.getElementById('ask-question'),
     
-    // Forms
+    // Form elements
     loginFormElement: document.getElementById('login-form-element'),
     registerFormElement: document.getElementById('register-form-element'),
     questionForm: document.getElementById('question-form'),
     answerForm: document.getElementById('answer-form'),
     
-    // Links
+    // Navigation links
     showRegister: document.getElementById('show-register'),
     showLogin: document.getElementById('show-login'),
     backToQuestions: document.getElementById('back-to-questions'),
     cancelQuestion: document.getElementById('cancel-question'),
     
-    // Containers
+    // Content containers
     questionsContainer: document.getElementById('questions-container'),
     questionDetailContainer: document.getElementById('question-detail-container'),
     answersContainer: document.getElementById('answers-container'),
     answerFormContainer: document.getElementById('answer-form-container'),
     
-    // Notification
+    // UI elements
     notification: document.getElementById('notification')
 };
 
-// Initialize App
+/**
+ * Initialize the application
+ * - Check authentication status
+ * - Load initial data
+ * - Set up event handlers
+ */
 function initApp() {
-    // Check if user is already logged in (from session)
+    // Check if user is already logged in
     checkAuthStatus();
     
     // Load initial questions
     loadQuestions();
     
-    // Setup event listeners
+    // Setup all event listeners
     setupEventListeners();
 }
 
-// API Functions
+/**
+ * API communication helper function
+ * @param {string} endpoint - API endpoint to call
+ * @param {string} method - HTTP method (GET, POST, etc.)
+ * @param {Object} body - Request body data (for POST, PUT, etc.)
+ * @returns {Promise<Object>} - Response data
+ */
 async function fetchAPI(endpoint, method = 'GET', body = null) {
     const options = {
         method,
         headers: {
             'Content-Type': 'application/json'
         },
-        credentials: 'include' // Include cookies for session
+        credentials: 'include' // Include cookies for session management
     };
     
+    // Add request body if provided
     if (body) {
         options.body = JSON.stringify(body);
     }
@@ -72,45 +89,60 @@ async function fetchAPI(endpoint, method = 'GET', body = null) {
         const response = await fetch(endpoint, options);
         const data = await response.json();
         
+        // Handle non-2xx responses
         if (!response.ok) {
-            throw new Error(data.message || 'Something went wrong');
+            throw new Error(data.message || `API error: ${response.status}`);
         }
         
         return data;
     } catch (error) {
-        console.error('API Error:', error);
-        throw error;
+        console.error(`API Error (${endpoint}):`, error);
+        throw error; // Re-throw for handling by the caller
     }
 }
 
-// Auth Functions
+/**
+ * AUTHENTICATION FUNCTIONS
+ */
+
+/**
+ * Check if the user is already logged in
+ * Uses localStorage for session persistence (would use cookies in production)
+ */
 async function checkAuthStatus() {
     try {
-        // We'll simulate this check for now
-        // In a real app, you'd make an API call to check session status
-        
-        // For now, just check if we have user info in localStorage
+        // For demo purposes, we're using localStorage
+        // In production, this should be a server API call to verify session
         const savedUser = localStorage.getItem('peerqUser');
         
         if (savedUser) {
             state.user = JSON.parse(savedUser);
-            updateAuthUI();
         } else {
             state.user = null;
-            updateAuthUI();
         }
+        
+        // Update UI based on authentication status
+        updateAuthUI();
     } catch (error) {
-        console.error('Auth check error:', error);
+        console.error('Authentication check failed:', error);
+        // Reset to logged-out state on error
         state.user = null;
         updateAuthUI();
     }
 }
 
+/**
+ * Log in a user
+ * @param {string} email - User email
+ * @param {string} password - User password
+ * @returns {Promise<Object>} - Login result
+ */
 async function login(email, password) {
     try {
         const data = await fetchAPI('/api/auth/login', 'POST', { email, password });
         
         if (data.success) {
+            // Store user data
             state.user = {
                 id: data.userId,
                 name: data.userName,
@@ -118,9 +150,10 @@ async function login(email, password) {
                 isAdmin: data.isAdmin
             };
             
-            // Save user to localStorage
+            // Save to localStorage for session persistence
             localStorage.setItem('peerqUser', JSON.stringify(state.user));
             
+            // Update UI
             updateAuthUI();
             hideAuthForms();
             showNotification('Logged in successfully!', 'success');
@@ -133,16 +166,23 @@ async function login(email, password) {
     }
 }
 
+/**
+ * Register a new user
+ * @param {string} name - User's full name
+ * @param {string} email - User's email (must be @galgotiasuniversity.ac.in)
+ * @param {string} password - User's password
+ * @returns {Promise<Object>} - Registration result
+ */
 async function register(name, email, password) {
     try {
         const data = await fetchAPI('/api/auth/register', 'POST', { name, email, password });
         
         if (data.success) {
-            // Remove saving user to state and localStorage
+            // Don't auto-login after registration
             state.user = null;
             localStorage.removeItem('peerqUser');
             
-            // Show login form instead of hiding auth forms
+            // Show login form for user to authenticate
             showLoginForm();
             showNotification('Registered successfully! Please log in with your credentials.', 'success');
         }
@@ -154,14 +194,19 @@ async function register(name, email, password) {
     }
 }
 
+/**
+ * Log out the current user
+ */
 async function logout() {
     try {
+        // Call logout API endpoint
         await fetchAPI('/api/auth/logout', 'POST');
         
-        // Clear user state and localStorage
+        // Clear user session data
         state.user = null;
         localStorage.removeItem('peerqUser');
         
+        // Update UI
         updateAuthUI();
         showNotification('Logged out successfully!', 'success');
     } catch (error) {
@@ -173,9 +218,17 @@ async function logout() {
     }
 }
 
-// Question Functions
+/**
+ * QUESTION FUNCTIONS
+ */
+
+/**
+ * Load questions, optionally filtered by category
+ * @param {string} category - Optional category filter
+ */
 async function loadQuestions(category = '') {
     try {
+        // Show loading indicator
         elements.questionsContainer.innerHTML = '<div class="loading">Loading questions...</div>';
         
         // Build API endpoint with optional category filter
@@ -188,9 +241,11 @@ async function loadQuestions(category = '') {
         const questions = await fetchAPI(endpoint);
         state.questions = questions;
         
+        // Render the questions to DOM
         renderQuestions(questions);
     } catch (error) {
         console.error('Error loading questions:', error);
+        // Show error with retry button
         elements.questionsContainer.innerHTML = `
             <div class="error">
                 <p>Failed to load questions. Please try again later.</p>
@@ -200,42 +255,55 @@ async function loadQuestions(category = '') {
     }
 }
 
+/**
+ * Load detailed view of a specific question with its answers
+ * @param {string|number} questionId - ID of the question to load
+ */
 async function loadQuestionDetail(questionId) {
     try {
-        // Show loading state
+        // Show loading indicators
         elements.questionDetailContainer.innerHTML = '<div class="loading">Loading question...</div>';
         elements.answersContainer.innerHTML = '';
         
+        // Fetch question data with answers
         const data = await fetchAPI(`/api/questions/${questionId}`);
         state.currentQuestion = data.question;
         
+        // Render question and answers
         renderQuestionDetail(data.question, data.answers);
         
-        // Show the question detail section
+        // Switch to question detail view
         showSection(elements.questionDetail);
     } catch (error) {
         console.error('Error loading question detail:', error);
+        // Show error with retry button
         elements.questionDetailContainer.innerHTML = `
             <div class="error">
                 <p>Failed to load question details. Please try again later.</p>
-                <button class="btn btn-primary" onclick="loadQuestionDetail(${questionId})">Retry</button>
+                <button class="btn btn-primary" onclick="loadQuestionDetail('${questionId}')">Retry</button>
             </div>
         `;
     }
 }
 
+/**
+ * Submit a new question
+ * @param {Object} questionData - Question data object
+ * @returns {Promise<Object>} - Submission result
+ */
 async function submitQuestion(questionData) {
     try {
         const data = await fetchAPI('/api/questions', 'POST', questionData);
         
         if (data.success) {
-            // Reset form
+            // Reset the form
             elements.questionForm.reset();
             
-            // Show questions list and reload questions
+            // Return to question list and reload questions
             showSection(elements.questionList);
             loadQuestions();
             
+            // Show success notification
             showNotification('Question posted successfully!', 'success');
         }
         
@@ -246,17 +314,24 @@ async function submitQuestion(questionData) {
     }
 }
 
+/**
+ * Submit an answer to a question
+ * @param {string|number} questionId - ID of the question being answered
+ * @param {Object} answerData - Answer data object
+ * @returns {Promise<Object>} - Submission result
+ */
 async function submitAnswer(questionId, answerData) {
     try {
         const data = await fetchAPI(`/api/questions/${questionId}/answers`, 'POST', answerData);
         
         if (data.success) {
-            // Reset form
+            // Reset the answer form
             elements.answerForm.reset();
             
-            // Reload question to get updated answers
+            // Reload question to show the new answer
             loadQuestionDetail(questionId);
             
+            // Show success notification
             showNotification('Answer submitted successfully!', 'success');
         }
         
@@ -267,7 +342,13 @@ async function submitAnswer(questionId, answerData) {
     }
 }
 
-// Rendering Functions
+/**
+ * UI FUNCTIONS
+ */
+
+/**
+ * Update authentication UI elements based on login status
+ */
 function updateAuthUI() {
     if (state.user) {
         // User is logged in
@@ -280,7 +361,21 @@ function updateAuthUI() {
             </div>
         `;
         
-        // Add logout event listener
+        // Update mobile auth section
+        const mobileAuthSection = document.getElementById('mobile-auth-section');
+        if (mobileAuthSection) {
+            mobileAuthSection.innerHTML = `
+                <div class="user-info">
+                    <span>Logged in as: ${state.user.name}</span>
+                </div>
+                <button id="mobile-logout-btn" class="btn btn-primary">Logout</button>
+            `;
+            
+            // Add mobile logout event listener
+            document.getElementById('mobile-logout-btn').addEventListener('click', logout);
+        }
+        
+        // Add desktop logout event listener
         document.getElementById('logout-btn').addEventListener('click', logout);
         
         // Show ask question button
@@ -297,7 +392,20 @@ function updateAuthUI() {
             <button id="register-btn" class="btn btn-primary">Register</button>
         `;
         
-        // Add auth buttons event listeners
+        // Update mobile auth section
+        const mobileAuthSection = document.getElementById('mobile-auth-section');
+        if (mobileAuthSection) {
+            mobileAuthSection.innerHTML = `
+                <button id="mobile-login-btn" class="btn btn-text">Log In</button>
+                <button id="mobile-register-btn" class="btn btn-primary">Register</button>
+            `;
+            
+            // Add mobile auth buttons event listeners
+            document.getElementById('mobile-login-btn').addEventListener('click', showLoginForm);
+            document.getElementById('mobile-register-btn').addEventListener('click', showRegisterForm);
+        }
+        
+        // Add desktop auth buttons event listeners
         document.getElementById('login-btn').addEventListener('click', showLoginForm);
         document.getElementById('register-btn').addEventListener('click', showRegisterForm);
         
@@ -309,7 +417,12 @@ function updateAuthUI() {
     }
 }
 
+/**
+ * Render the list of questions to the DOM
+ * @param {Array} questions - Array of question objects
+ */
 function renderQuestions(questions) {
+    // Handle empty state
     if (questions.length === 0) {
         elements.questionsContainer.innerHTML = `
             <div class="no-questions">
@@ -319,6 +432,7 @@ function renderQuestions(questions) {
         return;
     }
     
+    // Generate HTML for each question
     const questionsHTML = questions.map(question => `
         <div class="question-card" data-question-id="${question.id}">
             <h3 class="question-title">${question.title}</h3>
@@ -340,6 +454,7 @@ function renderQuestions(questions) {
         </div>
     `).join('');
     
+    // Insert HTML into container
     elements.questionsContainer.innerHTML = questionsHTML;
     
     // Add click event listeners to question cards
@@ -351,6 +466,11 @@ function renderQuestions(questions) {
     });
 }
 
+/**
+ * Render a detailed question view with its answers
+ * @param {Object} question - Question object
+ * @param {Array} answers - Array of answer objects
+ */
 function renderQuestionDetail(question, answers) {
     // Render question
     elements.questionDetailContainer.innerHTML = `
@@ -395,7 +515,10 @@ function renderQuestionDetail(question, answers) {
     }
 }
 
-// UI Helpers
+/**
+ * Switch the active section (page view)
+ * @param {HTMLElement} section - The section to show
+ */
 function showSection(section) {
     // Hide all sections
     elements.authForms.classList.add('hidden');
@@ -407,8 +530,8 @@ function showSection(section) {
     section.classList.remove('hidden');
     section.classList.add('active');
     
-    // Update navigation highlighting
-    const navLinks = document.querySelectorAll('#main-nav a');
+    // Update navigation highlighting for both desktop and mobile
+    const navLinks = document.querySelectorAll('#main-nav a, .mobile-nav a');
     navLinks.forEach(link => {
         link.classList.remove('active');
         if (link.dataset.section === section.id) {
@@ -417,33 +540,51 @@ function showSection(section) {
     });
 }
 
+/**
+ * Show the login form
+ */
 function showLoginForm() {
     elements.registerForm.classList.add('hidden');
     elements.loginForm.classList.remove('hidden');
     showSection(elements.authForms);
 }
 
+/**
+ * Show the registration form
+ */
 function showRegisterForm() {
     elements.loginForm.classList.add('hidden');
     elements.registerForm.classList.remove('hidden');
     showSection(elements.authForms);
 }
 
+/**
+ * Hide auth forms and return to question list
+ */
 function hideAuthForms() {
     showSection(elements.questionList);
 }
 
+/**
+ * Show a notification message to the user
+ * @param {string} message - Message to display
+ * @param {string} type - Notification type (info, success, error)
+ */
 function showNotification(message, type = 'info') {
     elements.notification.textContent = message;
     elements.notification.className = `notification ${type} visible`;
     
-    // Hide notification after 3 seconds
+    // Auto-hide notification after 3 seconds
     setTimeout(() => {
         elements.notification.classList.remove('visible');
     }, 3000);
 }
 
-// Utility Functions
+/**
+ * Format a date string for display
+ * @param {string} dateString - ISO date string
+ * @returns {string} - Formatted date
+ */
 function formatDate(dateString) {
     if (!dateString) return 'Unknown date';
     
@@ -455,6 +596,11 @@ function formatDate(dateString) {
     });
 }
 
+/**
+ * Format a category string for display
+ * @param {string} category - Category in snake_case
+ * @returns {string} - Formatted category in Title Case
+ */
 function formatCategory(category) {
     if (!category) return 'Uncategorized';
     
@@ -465,9 +611,129 @@ function formatCategory(category) {
         .join(' ');
 }
 
-// Event Listeners
+/**
+ * EVENT LISTENERS
+ * Set up all event listeners for the application
+ */
 function setupEventListeners() {
-    // Navigation links
+    // Mobile menu toggle
+    const mobileMenuButton = document.getElementById('mobile-menu-toggle');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (mobileMenuButton && mobileMenu) {
+        // Toggle mobile menu when button is clicked
+        mobileMenuButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            this.classList.toggle('active');
+            mobileMenu.classList.toggle('show');
+        });
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('#mobile-menu-toggle') && 
+                !event.target.closest('#mobile-menu') && 
+                mobileMenu.classList.contains('show')) {
+                mobileMenu.classList.remove('show');
+                mobileMenuButton.classList.remove('active');
+            }
+        });
+    }
+    
+    // Mobile ask question button
+    const mobileAskQuestionBtn = document.getElementById('mobile-ask-question-btn');
+    if (mobileAskQuestionBtn) {
+        mobileAskQuestionBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Check if user is logged in
+            if (!state.user) {
+                showNotification('You must be logged in to ask a question', 'error');
+                showLoginForm();
+                return;
+            }
+            
+            // Show ask question form
+            showSection(elements.askQuestion);
+            
+            // Close mobile menu
+            if (mobileMenu) {
+                mobileMenu.classList.remove('show');
+                if (mobileMenuButton) mobileMenuButton.classList.remove('active');
+            }
+        });
+    }
+    
+    // Mobile navigation links
+    const mobilNavLinks = document.querySelectorAll('.mobile-nav a');
+    mobilNavLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sectionId = this.dataset.section;
+            if (sectionId) {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    // Show selected section
+                    showSection(section);
+                    
+                    // Update active state on nav links
+                    document.querySelectorAll('#main-nav a, .mobile-nav a').forEach(navLink => {
+                        if (navLink.dataset.section === sectionId) {
+                            navLink.classList.add('active');
+                        } else {
+                            navLink.classList.remove('active');
+                        }
+                    });
+                    
+                    // Reload questions when navigating to home
+                    if (sectionId === 'question-list') {
+                        loadQuestions();
+                    }
+                }
+            }
+            
+            // Close mobile menu
+            mobileMenu.classList.remove('show');
+            mobileMenuButton.classList.remove('active');
+        });
+    });
+    
+    // Mobile auth buttons event listeners
+    document.addEventListener('click', function(event) {
+        // Mobile login button
+        if (event.target.id === 'mobile-login-btn') {
+            event.preventDefault();
+            showLoginForm();
+            // Close mobile menu
+            if (mobileMenu) {
+                mobileMenu.classList.remove('show');
+                if (mobileMenuButton) mobileMenuButton.classList.remove('active');
+            }
+        }
+        
+        // Mobile register button
+        if (event.target.id === 'mobile-register-btn') {
+            event.preventDefault();
+            showRegisterForm();
+            // Close mobile menu
+            if (mobileMenu) {
+                mobileMenu.classList.remove('show');
+                if (mobileMenuButton) mobileMenuButton.classList.remove('active');
+            }
+        }
+        
+        // Mobile logout button
+        if (event.target.id === 'mobile-logout-btn') {
+            event.preventDefault();
+            logout();
+            // Close mobile menu
+            if (mobileMenu) {
+                mobileMenu.classList.remove('show');
+                if (mobileMenuButton) mobileMenuButton.classList.remove('active');
+            }
+        }
+    });
+
+    // Desktop navigation links
     document.querySelectorAll('#main-nav a').forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
@@ -483,8 +749,8 @@ function setupEventListeners() {
             }
         });
     });
-    
-    // Auth forms
+
+    // Login form submission
     elements.loginFormElement.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -494,6 +760,7 @@ function setupEventListeners() {
         login(email, password).catch(error => console.error('Login error:', error));
     });
     
+    // Registration form submission
     elements.registerFormElement.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -528,54 +795,60 @@ function setupEventListeners() {
         showLoginForm();
     });
     
-    // Question form
+    // Question form submission
     elements.questionForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
+        // Check if user is logged in
         if (!state.user) {
             showNotification('You must be logged in to ask a question', 'error');
             showLoginForm();
             return;
         }
         
+        // Gather form data
         const questionData = {
             title: document.getElementById('question-title').value,
             body: document.getElementById('question-body').value,
             category: document.getElementById('question-category').value,
             tags: document.getElementById('question-tags').value,
-            isAnonymous: false // Anonymous posting removed
+            isAnonymous: false
         };
         
         submitQuestion(questionData).catch(error => console.error('Submit question error:', error));
     });
     
-    // Answer form
+    // Answer form submission
     elements.answerForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
+        // Check if user is logged in
         if (!state.user) {
             showNotification('You must be logged in to submit an answer', 'error');
             showLoginForm();
             return;
         }
         
+        // Check if we have a current question
         if (!state.currentQuestion) {
             showNotification('Question not found', 'error');
             return;
         }
         
+        // Gather form data
         const answerData = {
             content: document.getElementById('answer-content').value,
-            isAnonymous: false // Anonymous posting removed
+            isAnonymous: false
         };
         
         submitAnswer(state.currentQuestion.id, answerData).catch(error => console.error('Submit answer error:', error));
     });
     
-    // Navigation
+    // Ask question button
     elements.askQuestionBtn.addEventListener('click', function(e) {
         e.preventDefault();
         
+        // Check if user is logged in
         if (!state.user) {
             showNotification('You must be logged in to ask a question', 'error');
             showLoginForm();
@@ -585,11 +858,13 @@ function setupEventListeners() {
         showSection(elements.askQuestion);
     });
     
+    // Back to questions button
     elements.backToQuestions.addEventListener('click', function() {
         state.currentQuestion = null;
         showSection(elements.questionList);
     });
     
+    // Cancel question button
     elements.cancelQuestion.addEventListener('click', function() {
         elements.questionForm.reset();
         showSection(elements.questionList);

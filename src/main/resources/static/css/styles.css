@@ -1,33 +1,48 @@
-/* Base Styles - Modern Reddit-like UI */
+/**
+ * PeerQ - College Community Platform
+ * Dark Theme Stylesheet
+ */
+
+/* CSS Variables - Custom properties for consistent theming */
 :root {
-    --primary-color: #1e88e5;
-    --primary-hover: #1976d2;
-    --secondary-color: #2d2d2d;
-    --text-color: #e6e6e6;
-    --text-color-light: #aaaaaa;
-    --border-color: #3d3d3d;
-    --background-color: #1a1a1a;
-    --card-background: #2d2d2d;
-    --success-color: #43a047;
-    --error-color: #e53935;
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --card-radius: 4px;
-    --header-background: #212121;
-    --vote-button-background: #333333;
-    --upvote-color: #ff5722;
-    --downvote-color: #2196f3;
-    --tag-background: #333333;
-    --tag-color: #b0bec5;
+    /* Color palette */
+    --primary-color: #1e88e5;       /* Blue - primary accent color */
+    --primary-hover: #1976d2;       /* Darker blue for hover states */
+    --secondary-color: #2d2d2d;     /* Dark gray - secondary color */
+    --background-color: #1a1a1a;    /* Nearly black - main background */
+    --header-background: #212121;   /* Slightly lighter than background - header */
+    --card-background: #2d2d2d;     /* Dark gray - card background */
+    --border-color: #3d3d3d;        /* Medium gray - borders */
+    
+    /* Text colors */
+    --text-color: #e6e6e6;          /* Light gray - primary text */
+    --text-color-light: #aaaaaa;    /* Medium gray - secondary text */
+    
+    /* UI element colors */
+    --success-color: #43a047;       /* Green - success states */
+    --error-color: #e53935;         /* Red - error states */
+    --vote-button-background: #333333;  /* Dark gray - vote button background */
+    --upvote-color: #ff5722;        /* Orange - upvote color */
+    --downvote-color: #2196f3;      /* Blue - downvote color */
+    --tag-background: #333333;      /* Dark gray - tag background */
+    --tag-color: #b0bec5;           /* Light blue-gray - tag text */
+    
+    /* Layout properties */
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);  /* Standard shadow */
+    --card-radius: 4px;             /* Border radius for cards */
 }
 
+/* Base Reset */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/* Base Styles */
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, 
+                 "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
     line-height: 1.6;
     color: var(--text-color);
     background-color: var(--background-color);
@@ -36,15 +51,18 @@ body {
     flex-direction: column;
 }
 
+/* Link Styles */
 a {
     color: var(--primary-color);
     text-decoration: none;
+    transition: color 0.2s ease;
 }
 
 a:hover {
     text-decoration: underline;
 }
 
+/* Button Styles */
 button, .btn {
     cursor: pointer;
     border: none;
@@ -76,11 +94,14 @@ button, .btn {
     color: var(--primary-hover);
 }
 
+/* Utility Classes */
 .hidden {
     display: none !important;
 }
 
-/* Header */
+/*====================
+   HEADER SECTION
+====================*/
 header {
     background-color: var(--header-background);
     box-shadow: var(--shadow);
@@ -101,6 +122,7 @@ header {
     height: 100%;
 }
 
+/* Logo */
 .logo {
     display: flex;
     align-items: center;
@@ -113,25 +135,37 @@ header {
     max-width: 120px;
 }
 
+/* Main Navigation - Desktop */
+.main-navigation {
+    display: flex;
+}
+
 nav ul {
     display: flex;
     list-style: none;
+    margin-left: 20px;
 }
 
 nav ul li {
-    margin-left: 1.5rem;
+    margin-right: 15px;
 }
 
 nav ul li a {
     color: var(--text-color);
     font-weight: 500;
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    transition: all 0.15s ease;
 }
 
-nav ul li a.active, nav ul li a:hover {
+nav ul li a.active, 
+nav ul li a:hover {
     color: var(--primary-color);
+    background-color: rgba(30, 136, 229, 0.08);
     text-decoration: none;
 }
 
+/* Authentication Section - Desktop */
 .auth-section {
     display: flex;
     align-items: center;
@@ -162,6 +196,7 @@ nav ul li a.active, nav ul li a:hover {
     font-weight: 500;
 }
 
+/* Dropdown Menu */
 .dropdown-menu {
     position: absolute;
     right: 0;
@@ -185,7 +220,9 @@ nav ul li a.active, nav ul li a:hover {
     text-decoration: none;
 }
 
-/* Main Content */
+/*====================
+   MAIN CONTENT
+====================*/
 main {
     flex: 1;
     max-width: 1200px;
@@ -194,6 +231,7 @@ main {
     width: 100%;
 }
 
+/* Content Sections */
 .content-section {
     margin-bottom: 2rem;
 }
@@ -207,6 +245,7 @@ main {
     border-bottom: 1px solid var(--border-color);
 }
 
+/* Category Filter Controls */
 .content-controls {
     display: flex;
     gap: 0.75rem;
@@ -222,23 +261,38 @@ main {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
+    /* Custom dropdown arrow styling */
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e6e6e6'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
 }
 
 .content-controls select:hover {
-    background-color: #eceff1;
+    background-color: #3d3d3d;
 }
 
 .content-controls select:focus {
     border-color: var(--primary-color);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 121, 211, 0.2);
+    box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.2);
 }
 
-/* Forms */
+.content-controls select option {
+    background-color: var(--card-background);
+    color: var(--text-color);
+    padding: 8px;
+}
+
+/*====================
+   FORM STYLES
+====================*/
 .forms-container {
     max-width: 420px;
     margin: 2rem auto;
-    background-color: white;
+    background-color: var(--card-background);
     padding: 2rem;
     border-radius: var(--card-radius);
     box-shadow: var(--shadow);
@@ -257,6 +311,7 @@ label {
     color: var(--text-color);
 }
 
+/* Form Controls */
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -282,6 +337,7 @@ select option[value=""] {
     color: var(--text-color);
 }
 
+/* Focus states */
 input:focus,
 textarea:focus,
 select:focus {
@@ -295,7 +351,9 @@ small {
     font-size: 0.8rem;
 }
 
-/* Question List */
+/*====================
+   QUESTION LIST
+====================*/
 .questions-container {
     display: flex;
     flex-direction: column;
@@ -341,6 +399,7 @@ small {
     align-items: center;
 }
 
+/* Dot separator between meta items */
 .question-meta span::after {
     content: "•";
     margin-left: 0.5rem;
@@ -386,7 +445,9 @@ small {
     color: var(--text-color-light);
 }
 
-/* Question Detail */
+/*====================
+   QUESTION DETAILS
+====================*/
 .question-header {
     margin-bottom: 1.25rem;
     display: flex;
@@ -443,7 +504,9 @@ small {
     font-weight: 500;
 }
 
-/* Answers */
+/*====================
+   ANSWERS SECTION
+====================*/
 .answers-header {
     font-size: 1rem;
     font-weight: 600;
@@ -481,7 +544,7 @@ small {
     font-weight: 500;
 }
 
-/* Answer form */
+/* Answer Form */
 #answer-form-container {
     background-color: var(--card-background);
     border-radius: var(--card-radius);
@@ -498,10 +561,14 @@ small {
     color: var(--text-color);
 }
 
-/* Footer */
+/*====================
+   FOOTER SECTION
+====================*/
 footer {
-    background-color: white;
-    padding: 2rem 0;
+    background-color: var(--header-background);
+    height: 64px;
+    display: flex;
+    align-items: center;
     margin-top: auto;
 }
 
@@ -510,10 +577,12 @@ footer {
     margin: 0 auto;
     padding: 0 1rem;
     text-align: center;
-    color: var(--text-color-light);
+    color: var(--text-color);
 }
 
-/* Notification */
+/*====================
+   NOTIFICATIONS
+====================*/
 .notification {
     position: fixed;
     bottom: 2rem;
@@ -521,7 +590,8 @@ footer {
     padding: 1rem;
     border-radius: 4px;
     box-shadow: var(--shadow);
-    background-color: white;
+    background-color: var(--card-background);
+    color: var(--text-color);
     z-index: 1000;
     max-width: 300px;
     transition: transform 0.3s, opacity 0.3s;
@@ -542,40 +612,317 @@ footer {
     border-left: 4px solid var(--error-color);
 }
 
-/* Loading */
+/* Loading Indicator */
 .loading {
     text-align: center;
     padding: 2rem;
     color: var(--text-color-light);
 }
 
-/* Responsive */
+/*====================
+   MOBILE STYLES
+====================*/
+/* Mobile Menu Button */
+.mobile-menu-button {
+    display: none;
+    background-color: var(--primary-color);
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 110;
+    border-radius: 4px;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.menu-icon {
+    display: block;
+    width: 24px;
+    height: 3px;
+    background-color: #ffffff;
+    position: relative;
+    transition: background-color 0.3s;
+}
+
+.menu-icon:before,
+.menu-icon:after {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 3px;
+    background-color: #ffffff;
+    position: absolute;
+    transition: transform 0.3s;
+}
+
+.menu-icon:before {
+    top: -8px;
+}
+
+.menu-icon:after {
+    bottom: -8px;
+}
+
+/* Mobile Menu Container */
+.mobile-menu {
+    display: none;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 64px);
+    background-color: var(--background-color);
+    z-index: 100;
+    padding: 1.5rem;
+    flex-direction: column;
+    overflow-y: auto;
+    border-top: 1px solid var(--border-color);
+}
+
+.mobile-menu.show {
+    display: flex;
+}
+
+/* Mobile Menu Navigation */
+.mobile-menu .mobile-nav ul {
+    display: flex;
+    flex-direction: column;
+    list-style: none;
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+.mobile-menu .mobile-nav ul li {
+    width: 100%;
+    margin-bottom: 0.75rem;
+}
+
+.mobile-menu .mobile-nav ul li a {
+    display: flex;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--text-color);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.mobile-menu .mobile-nav ul li a:hover,
+.mobile-menu .mobile-nav ul li a.active {
+    background-color: rgba(30, 136, 229, 0.1);
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+/* Login/Register Form Colors */
+#login-form h2, 
+#register-form h2 {
+    color: var(--text-color);
+    margin-bottom: 1.5rem;
+}
+
+#login-form p, 
+#register-form p {
+    color: var(--text-color-light);
+}
+
+#login-form a, 
+#register-form a {
+    color: var(--primary-color);
+}
+
+/* Mobile Menu Button Active State */
+.mobile-menu-button.active .menu-icon {
+    background-color: transparent;
+}
+
+.mobile-menu-button.active .menu-icon:before {
+    transform: rotate(45deg);
+    top: 0;
+}
+
+.mobile-menu-button.active .menu-icon:after {
+    transform: rotate(-45deg);
+    bottom: 0;
+}
+
+/*====================
+   RESPONSIVE DESIGN
+====================*/
+/* Tablet and Mobile Styles */
 @media (max-width: 768px) {
+    /* Header adjustments */
+    header {
+        height: auto;
+        padding: 0;
+    }
+    
     .header-container {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        position: relative;
     }
     
-    nav ul {
-        margin-top: 1rem;
-        margin-left: 0;
+    .logo {
+        margin-bottom: 0;
     }
     
-    nav ul li {
-        margin-left: 0;
-        margin-right: 1rem;
+    /* Show mobile menu button */
+    .mobile-menu-button {
+        display: flex !important;
     }
     
+    .mobile-menu-button:hover,
+    .mobile-menu-button.active {
+        background-color: var(--primary-hover);
+    }
+    
+    /* Hide desktop navigation */
+    .main-navigation {
+        display: none !important;
+    }
+    
+    /* Hide desktop auth section */
     .auth-section {
+        display: none !important;
+    }
+    
+    /* Mobile authentication section */
+    .mobile-auth-section {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
         margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .mobile-auth-section button {
+        width: 100%;
+        margin-bottom: 0.75rem;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+    
+    /* Content adjustments */
+    main {
+        padding: 1.5rem 1rem;
     }
     
     .content-header {
         flex-direction: column;
+        gap: 1rem;
         align-items: flex-start;
     }
     
     .content-controls {
-        margin-top: 1rem;
+        width: 100%;
+    }
+    
+    .content-controls select {
+        width: 100%;
+    }
+    
+    /* Forms adjustments */
+    .forms-container {
+        padding: 1.5rem;
+        margin: 1rem auto;
+    }
+    
+    /* Question list adjustments */
+    .question-title {
+        font-size: 1rem;
+    }
+    
+    .question-meta {
+        flex-wrap: wrap;
+    }
+    
+    .question-stats {
+        flex-wrap: wrap;
+    }
+    
+    /* Question detail adjustments */
+    .question-detail {
+        padding: 1rem;
+    }
+    
+    .question-detail-title {
+        font-size: 1.2rem;
+    }
+    
+    /* Footer adjustments */
+    footer {
+        height: auto;
+        min-height: 64px;
+        padding: 0.5rem 0;
+    }
+    
+    /* Form buttons full width */
+    .form-group button[type="submit"] {
+        width: 100%;
+    }
+    
+    /* Auth forms padding */
+    #login-form, #register-form {
+        padding: 0.5rem;
+    }
+}
+
+/* Desktop Only Styles */
+@media (min-width: 769px) {
+    /* Show navigation in desktop view */
+    .main-navigation {
+        display: flex;
+    }
+    
+    .mobile-menu-button {
+        display: none;
+    }
+}
+
+/* Small Mobile Styles */
+@media (max-width: 480px) {
+    /* Header spacing */
+    .header-container {
+        padding: 0.5rem 0.75rem;
+    }
+    
+    nav ul {
+        gap: 0.75rem;
+    }
+    
+    /* Form control sizing */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    textarea,
+    select {
+        padding: 0.6rem 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    /* Button sizing */
+    .btn {
+        width: 100%;
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Answer card spacing */
+    .answer-card {
+        padding: 1rem;
+    }
+    
+    /* Tag spacing */
+    .question-tag {
+        margin-bottom: 0.25rem;
     }
 }
