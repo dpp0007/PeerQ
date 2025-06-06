@@ -5,31 +5,32 @@
 
 /* CSS Variables - Custom properties for consistent theming */
 :root {
-    /* Color palette */
-    --primary-color: #1e88e5;       /* Blue - primary accent color */
-    --primary-hover: #1976d2;       /* Darker blue for hover states */
-    --secondary-color: #2d2d2d;     /* Dark gray - secondary color */
-    --background-color: #1a1a1a;    /* Nearly black - main background */
-    --header-background: #212121;   /* Slightly lighter than background - header */
-    --card-background: #2d2d2d;     /* Dark gray - card background */
-    --border-color: #3d3d3d;        /* Medium gray - borders */
-    
-    /* Text colors */
-    --text-color: #e6e6e6;          /* Light gray - primary text */
-    --text-color-light: #aaaaaa;    /* Medium gray - secondary text */
-    
-    /* UI element colors */
-    --success-color: #43a047;       /* Green - success states */
-    --error-color: #e53935;         /* Red - error states */
-    --vote-button-background: #333333;  /* Dark gray - vote button background */
-    --upvote-color: #ff5722;        /* Orange - upvote color */
-    --downvote-color: #2196f3;      /* Blue - downvote color */
-    --tag-background: #333333;      /* Dark gray - tag background */
-    --tag-color: #b0bec5;           /* Light blue-gray - tag text */
-    
-    /* Layout properties */
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);  /* Standard shadow */
-    --card-radius: 4px;             /* Border radius for cards */
+    /* Base Colors */
+    --background-color: #121212;
+    --card-background: #1A1A1A;
+    --text-color: #E0E0E0;
+    --text-color-light: #B0B0B0;
+    --border-color: #444444;
+
+    /* Accent Colors */
+    --accent-1: #00FF7F;
+    --accent-1-alt: #43B97F;
+    --accent-2: #FF1493;
+    --accent-2-alt: #FF5722;
+    --accent-3: #6A5ACD;
+    --accent-3-alt: #673AB7;
+
+    /* State Colors */
+    --error-color: #FF4500;
+    --success-color: #00FF7F;
+
+    /* UI Elements */
+    --primary-color: var(--accent-1);
+    --secondary-color: #2A2A2A;
+    --tag-background: var(--accent-3);
+    --tag-color: var(--text-color);
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --card-radius: 8px;
 }
 
 /* Base Reset */
@@ -74,12 +75,12 @@ button, .btn {
 }
 
 .btn-primary {
-    background-color: var(--primary-color);
-    color: white;
+    background-color: var(--accent-1);
+    color: var(--background-color);
 }
 
 .btn-primary:hover {
-    background-color: var(--primary-hover);
+    background-color: var(--accent-1-alt);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -91,7 +92,7 @@ button, .btn {
 
 .btn-text:hover {
     background-color: rgba(0, 121, 211, 0.05);
-    color: var(--primary-hover);
+    color: var(--accent-1-alt);
 }
 
 /* Utility Classes */
@@ -103,7 +104,7 @@ button, .btn {
    HEADER SECTION
 ====================*/
 header {
-    background-color: var(--header-background);
+    background-color: var(--secondary-color);
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
@@ -160,8 +161,8 @@ nav ul li a {
 
 nav ul li a.active, 
 nav ul li a:hover {
-    color: var(--primary-color);
-    background-color: rgba(30, 136, 229, 0.08);
+    color: var(--accent-1);
+    background-color: rgba(0, 255, 127, 0.1);
     text-decoration: none;
 }
 
@@ -201,12 +202,13 @@ nav ul li a:hover {
     position: absolute;
     right: 0;
     top: 100%;
-    background-color: white;
+    background-color: var(--card-background);
     box-shadow: var(--shadow);
     border-radius: 4px;
     width: 200px;
     padding: 0.5rem 0;
     z-index: 10;
+    border: 1px solid var(--border-color);
 }
 
 .dropdown-menu a {
@@ -217,6 +219,7 @@ nav ul li a:hover {
 
 .dropdown-menu a:hover {
     background-color: var(--secondary-color);
+    color: var(--accent-1);
     text-decoration: none;
 }
 
@@ -255,7 +258,7 @@ main {
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
     border-radius: 999px;
-    background-color: var(--secondary-color);
+    background-color: var(--card-background);
     border: 1px solid var(--border-color);
     color: var(--text-color);
     font-weight: 500;
@@ -266,18 +269,19 @@ main {
     -webkit-appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23e6e6e6'%3e%3cpath d='M7 10l5 5 5-5z'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 30px;
+    background-position: right 15px center;
+    padding-right: 40px;
+    min-width: 160px;
 }
 
 .content-controls select:hover {
-    background-color: #3d3d3d;
+    background-color: var(--secondary-color);
 }
 
 .content-controls select:focus {
-    border-color: var(--primary-color);
+    border-color: var(--accent-1);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(30, 136, 229, 0.2);
+    box-shadow: 0 0 0 2px rgba(0, 255, 127, 0.2);
 }
 
 .content-controls select option {
@@ -322,14 +326,14 @@ select {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 0.95rem;
-    background-color: var(--secondary-color);
+    background-color: var(--card-background);
     color: var(--text-color);
     transition: all 0.15s ease;
 }
 
 select option {
     color: var(--text-color);
-    background-color: var(--secondary-color);
+    background-color: var(--card-background);
 }
 
 /* Style for the placeholder option in selects */
@@ -342,8 +346,8 @@ input:focus,
 textarea:focus,
 select:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px rgba(0, 121, 211, 0.2);
+    border-color: var(--accent-1);
+    box-shadow: 0 0 0 2px rgba(0, 255, 127, 0.2);
 }
 
 small {
@@ -373,8 +377,8 @@ small {
 }
 
 .question-card:hover {
-    border-color: #c9cbcd;
-    box-shadow: 0 1px 10px rgba(0, 0, 0, 0.05);
+    border-color: var(--accent-3);
+    box-shadow: 0 2px 8px rgba(106, 90, 205, 0.2);
 }
 
 .question-title {
@@ -412,8 +416,8 @@ small {
 }
 
 .question-category {
-    background-color: var(--tag-background);
-    color: var(--tag-color);
+    background-color: var(--accent-3);
+    color: var(--text-color);
     padding: 0.25rem 0.5rem;
     border-radius: 12px;
     font-size: 0.7rem;
@@ -464,7 +468,7 @@ small {
 }
 
 .question-header button:hover {
-    color: var(--primary-color);
+    color: var(--accent-1);
 }
 
 .question-detail {
@@ -565,7 +569,7 @@ small {
    FOOTER SECTION
 ====================*/
 footer {
-    background-color: var(--header-background);
+    background-color: var(--secondary-color);
     height: 64px;
     display: flex;
     align-items: center;
@@ -713,8 +717,8 @@ footer {
 
 .mobile-menu .mobile-nav ul li a:hover,
 .mobile-menu .mobile-nav ul li a.active {
-    background-color: rgba(30, 136, 229, 0.1);
-    color: var(--primary-color);
+    background-color: rgba(0, 255, 127, 0.1);
+    color: var(--accent-1);
     text-decoration: none;
 }
 
@@ -732,7 +736,7 @@ footer {
 
 #login-form a, 
 #register-form a {
-    color: var(--primary-color);
+    color: var(--accent-1);
 }
 
 /* Mobile Menu Button Active State */
@@ -780,7 +784,7 @@ footer {
     
     .mobile-menu-button:hover,
     .mobile-menu-button.active {
-        background-color: var(--primary-hover);
+        background-color: var(--accent-1-alt);
     }
     
     /* Hide desktop navigation */
