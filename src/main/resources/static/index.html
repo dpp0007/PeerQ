@@ -25,6 +25,46 @@
                 </ul>
             </nav>
             
+            <!-- Search Bar -->
+            <div class="search-container">
+                <div class="search-wrapper">
+                    <input type="text" id="global-search" placeholder="Search questions, topics, or users..." aria-label="Search">
+                    <button class="search-filters-btn" aria-label="Search filters">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="11" cy="11" r="8"></circle>
+                          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="search-filters-panel hidden">
+                    <div class="filter-group">
+                        <label>Sort by</label>
+                        <select id="search-sort">
+                            <option value="relevance">Relevance</option>
+                            <option value="newest">Newest</option>
+                            <option value="votes">Most Voted</option>
+                            <option value="answers">Most Answered</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Time</label>
+                        <select id="search-time">
+                            <option value="all">All time</option>
+                            <option value="day">Past 24 hours</option>
+                            <option value="week">Past week</option>
+                            <option value="month">Past month</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Status</label>
+                        <div class="checkbox-group">
+                            <label><input type="checkbox" value="answered"> Answered</label>
+                            <label><input type="checkbox" value="unanswered"> Unanswered</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
             <!-- Mobile Menu Toggle Button -->
             <button id="mobile-menu-toggle" class="mobile-menu-button" aria-label="Toggle mobile menu">
                 <span class="menu-icon"></span>

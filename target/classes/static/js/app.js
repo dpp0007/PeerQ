@@ -243,6 +243,7 @@ async function loadQuestions(category = '') {
         
         // Render the questions to DOM
         renderQuestions(questions);
+        setupLiveSearchAndSort();
     } catch (error) {
         console.error('Error loading questions:', error);
         // Show error with retry button
@@ -609,6 +610,37 @@ function formatCategory(category) {
         .split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
+}
+
+/**
+ * Live filter and sort questions in the feed as the user types or changes sort
+ */
+function setupLiveSearchAndSort() {
+    const searchInput = document.getElementById('global-search');
+    const sortSelect = document.getElementById('search-sort');
+    if (!searchInput || !sortSelect) return;
+
+    function filterAndSortQuestions() {
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        const sortBy = sortSelect.value;
+        let filtered = state.questions.filter(q =>
+            q.title.toLowerCase().includes(searchTerm) ||
+            (q.tags && q.tags.toLowerCase().includes(searchTerm)) ||
+            (q.userName && q.userName.toLowerCase().includes(searchTerm))
+        );
+        // Sort
+        if (sortBy === 'newest') {
+            filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        } else if (sortBy === 'votes') {
+            filtered.sort((a, b) => (b.votes || 0) - (a.votes || 0));
+        } else if (sortBy === 'answers') {
+            filtered.sort((a, b) => (b.answerCount || 0) - (a.answerCount || 0));
+        } // else relevance = default order
+        renderQuestions(filtered);
+    }
+
+    searchInput.addEventListener('input', filterAndSortQuestions);
+    sortSelect.addEventListener('change', filterAndSortQuestions);
 }
 
 /**
