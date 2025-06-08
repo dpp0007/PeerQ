@@ -1,12 +1,9 @@
 package com.peerq;
 
-import com.peerq.desktopui.DesktopAppWindow;
+import com.peerq.desktopui.PeerQMainApplication;
 
 public class DesktopMain {
     public static void main(String[] args) {
-        javax.swing.SwingUtilities.invokeLater(() -> {
-            DesktopAppWindow app = new DesktopAppWindow();
-            app.setVisible(true);
-        });
+        PeerQMainApplication.main(args);
     }
 } 
