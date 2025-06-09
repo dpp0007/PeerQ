@@ -69,6 +69,9 @@ public class PeerQMainApplication extends Application {
     // Store all questions for filtering
     private List<Question> allQuestions = new ArrayList<>();
     
+    // Moderation panel reference
+    private VBox moderationPanel;
+    
     @Override
     public void start(Stage primaryStage) {
         try {
@@ -671,39 +674,36 @@ public class PeerQMainApplication extends Application {
         
         questionContent.getChildren().addAll(title, meta, content);
         
+        // Admin controls for question
+        if (currentUser != null && currentUser.isAdmin() && question != null) {
+            HBox adminControls = new HBox(10);
+            adminControls.setAlignment(Pos.CENTER_LEFT);
+            adminControls.getChildren().addAll(
+                createDeleteQuestionButton(question),
+                createModerationPanelButton()
+            );
+            questionContent.getChildren().add(adminControls);
+        }
+        
         // Answers section
         VBox answersSection = new VBox(20);
-        Label answersTitle = new Label("Answers");
-        answersTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
-        answersTitle.setStyle("-fx-text-fill: #00FF7F;");
-        
-        VBox answersList = new VBox(10);
-        
-        if (question != null) {
-            // Load real answers from database
-            try {
-                List<Answer> answers = answerDAO.getAnswersByQuestionId(question.getId());
-                for (Answer answer : answers) {
-                    answersList.getChildren().add(createAnswerCard(answer));
-                }
-            } catch (Exception e) {
-                System.err.println("Error loading answers: " + e.getMessage());
+        answersSection.setPadding(new Insets(10, 0, 0, 0));
+        answersSection.getChildren().add(new Label("Answers:"));
+        List<Answer> answers = question != null ? answerDAO.getAnswersByQuestionId(question.getId()) : new ArrayList<>();
+        for (Answer answer : answers) {
+            VBox answerCard = new VBox(8);
+            answerCard.setPadding(new Insets(10));
+            answerCard.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-background-radius: 8px; -fx-border-radius: 8px;");
+            Label answerContent = new Label(answer.getContent());
+            answerContent.setTextFill(Color.rgb(224, 224, 224));
+            Label answerMeta = new Label("By " + answer.getUserName() + " • " + formatDate(answer.getCreatedAt()));
+            answerMeta.setTextFill(Color.rgb(160, 160, 160));
+            answerCard.getChildren().addAll(answerContent, answerMeta);
+            // Admin control for answer
+            if (currentUser != null && currentUser.isAdmin()) {
+                answerCard.getChildren().add(createRemoveAnswerButton(answer, question));
             }
-        } else {
-            // Sample answers
-            answersList.getChildren().addAll(
-                createAnswerCard("Jane Smith", "9 June 2025 10:45",
-                    "Here's what worked for me:\n\n" +
-                    "1. Create a study schedule with specific time slots for each subject\n" +
-                    "2. Take regular breaks (25 minutes study, 5 minutes break)\n" +
-                    "3. Use active recall techniques instead of passive reading\n" +
-                    "4. Form study groups for difficult topics\n" +
-                    "5. Get enough sleep and exercise"),
-                createAnswerCard("Mike Johnson", "9 June 2025 11:30",
-                    "I recommend using the Pomodoro Technique. Study for 25 minutes, " +
-                    "then take a 5-minute break. After 4 pomodoros, take a longer break. " +
-                    "This helps maintain focus and prevents burnout.")
-            );
+            answersSection.getChildren().add(answerCard);
         }
         
         // Answer form
@@ -801,7 +801,8 @@ public class PeerQMainApplication extends Application {
             }
         });
         
-        panel.getChildren().addAll(backButton, questionContent, answersTitle, answersList, answerForm);
+        panel.getChildren().clear();
+        panel.getChildren().addAll(backButton, questionContent, answersSection, answerForm);
         return panel;
     }
     
@@ -1572,6 +1573,295 @@ public class PeerQMainApplication extends Application {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.setResult(ButtonType.CANCEL);
+    }
+    
+    // --- Admin Controls Helper Methods ---
+    private Button createDeleteQuestionButton(Question question) {
+        Button deleteBtn = new Button("Delete Question");
+        deleteBtn.getStyleClass().add("admin-delete-btn");
+        deleteBtn.setOnAction(e -> {
+            if (question != null && confirmAction("Are you sure you want to delete this question?")) {
+                try {
+                    boolean success = questionDAO.deleteQuestion(question.getId());
+                    if (success) {
+                        showAlert("Deleted", "Question deleted successfully.");
+                        showQuestionList();
+                    } else {
+                        showAlert("Error", "Failed to delete question.");
+                    }
+                } catch (Exception ex) {
+                    showAlert("Error", "Failed to delete question: " + ex.getMessage());
+                }
+            }
+        });
+        return deleteBtn;
+    }
+
+    private Button createModerationPanelButton() {
+        Button modPanelBtn = new Button("Moderation Panel");
+        modPanelBtn.getStyleClass().add("admin-modpanel-btn");
+        modPanelBtn.setOnAction(e -> showModerationPanel());
+        return modPanelBtn;
+    }
+
+    private Button createRemoveAnswerButton(Answer answer, Question question) {
+        Button removeBtn = new Button("Remove Answer");
+        removeBtn.getStyleClass().add("admin-remove-answer-btn");
+        removeBtn.setOnAction(e -> {
+            if (answer != null && confirmAction("Remove this answer?")) {
+                try {
+                    boolean success = answerDAO.deleteAnswer(answer.getId());
+                    if (success) {
+                        showAlert("Removed", "Answer removed successfully.");
+                        showQuestionDetail(question);
+                    } else {
+                        showAlert("Error", "Failed to remove answer.");
+                    }
+                } catch (Exception ex) {
+                    showAlert("Error", "Failed to remove answer: " + ex.getMessage());
+                }
+            }
+        });
+        return removeBtn;
+    }
+
+    private boolean confirmAction(String message) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION, message, ButtonType.YES, ButtonType.NO);
+        alert.setHeaderText(null);
+        alert.setTitle("Confirm Action");
+        alert.showAndWait();
+        return alert.getResult() == ButtonType.YES;
+    }
+
+    private void showModerationPanel() {
+        if (moderationPanel == null) {
+            moderationPanel = createModerationPanel();
+        }
+        // Hide all other panels
+        questionList.setVisible(false);
+        questionDetail.setVisible(false);
+        askQuestion.setVisible(false);
+        loginPanel.setVisible(false);
+        registerPanel.setVisible(false);
+        // Remove old moderation panel if present
+        mainContent.getChildren().remove(moderationPanel);
+        // Add and show moderation panel
+        mainContent.getChildren().add(moderationPanel);
+        moderationPanel.setVisible(true);
+    }
+
+    private VBox createModerationPanel() {
+        VBox panel = new VBox(20);
+        panel.setPadding(new Insets(20));
+        panel.setStyle("-fx-background-color: #181818;");
+
+        Label title = new Label("Moderation Panel");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+        title.setStyle("-fx-text-fill: #fd7e14;");
+
+        TabPane tabPane = new TabPane();
+        tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+
+        // Flagged Content Tab
+        Tab flaggedTab = new Tab("Flagged Content");
+        flaggedTab.setContent(createFlaggedContentTab());
+
+        // User Management Tab
+        Tab usersTab = new Tab("User Management");
+        usersTab.setContent(createUserManagementTab());
+
+        // Tag/Category Management Tab
+        Tab tagsTab = new Tab("Tags/Categories");
+        tagsTab.setContent(new Label("Add, edit, or remove tags/categories here."));
+
+        // Moderation Logs/Stats Tab
+        Tab logsTab = new Tab("Logs/Stats");
+        logsTab.setContent(new Label("View moderation logs and statistics here."));
+
+        tabPane.getTabs().addAll(flaggedTab, usersTab, tagsTab, logsTab);
+
+        Button backButton = new Button("← Back to Questions");
+        backButton.getStyleClass().add("back-button");
+        backButton.setOnAction(e -> showQuestionList());
+
+        panel.getChildren().addAll(title, tabPane, backButton);
+        return panel;
+    }
+
+    private VBox createFlaggedContentTab() {
+        VBox flaggedPanel = new VBox(20);
+        flaggedPanel.setPadding(new Insets(10));
+
+        Label questionsLabel = new Label("Flagged Questions");
+        questionsLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        questionsLabel.setStyle("-fx-text-fill: #FF6B6B;");
+
+        TableView<Question> questionsTable = new TableView<>();
+        questionsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        TableColumn<Question, String> qTitleCol = new TableColumn<>("Title");
+        qTitleCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getTitle()));
+        TableColumn<Question, String> qAuthorCol = new TableColumn<>("Author");
+        qAuthorCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getUserName()));
+        TableColumn<Question, String> qDateCol = new TableColumn<>("Date");
+        qDateCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getCreatedAt()));
+        TableColumn<Question, Void> qActionCol = new TableColumn<>("Actions");
+        qActionCol.setCellFactory(col -> new TableCell<>() {
+            private final Button unflagBtn = new Button("Unflag");
+            private final Button deleteBtn = new Button("Delete");
+            {
+                unflagBtn.setOnAction(e -> {
+                    Question q = getTableView().getItems().get(getIndex());
+                    q.setFlagged(false);
+                    questionDAO.updateQuestionFlagged(q.getId(), false);
+                    questionsTable.getItems().remove(q);
+                });
+                deleteBtn.setOnAction(e -> {
+                    Question q = getTableView().getItems().get(getIndex());
+                    questionDAO.deleteQuestion(q.getId());
+                    questionsTable.getItems().remove(q);
+                });
+                unflagBtn.setStyle("-fx-background-color: #fd7e14; -fx-text-fill: white; -fx-font-weight: bold;");
+                deleteBtn.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-weight: bold;");
+            }
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    HBox box = new HBox(8, unflagBtn, deleteBtn);
+                    setGraphic(box);
+                }
+            }
+        });
+        questionsTable.getColumns().addAll(qTitleCol, qAuthorCol, qDateCol, qActionCol);
+        questionsTable.setPlaceholder(new Label("No flagged questions."));
+        questionsTable.getItems().addAll(questionDAO.getFlaggedQuestions());
+
+        Label answersLabel = new Label("Flagged Answers");
+        answersLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        answersLabel.setStyle("-fx-text-fill: #FF6B6B;");
+
+        TableView<Answer> answersTable = new TableView<>();
+        answersTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        TableColumn<Answer, String> aContentCol = new TableColumn<>("Content");
+        aContentCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getContent()));
+        TableColumn<Answer, String> aAuthorCol = new TableColumn<>("Author");
+        aAuthorCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getUserName()));
+        TableColumn<Answer, String> aDateCol = new TableColumn<>("Date");
+        aDateCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getCreatedAt()));
+        TableColumn<Answer, Void> aActionCol = new TableColumn<>("Actions");
+        aActionCol.setCellFactory(col -> new TableCell<>() {
+            private final Button unflagBtn = new Button("Unflag");
+            private final Button deleteBtn = new Button("Delete");
+            {
+                unflagBtn.setOnAction(e -> {
+                    Answer a = getTableView().getItems().get(getIndex());
+                    a.setFlagged(false);
+                    answerDAO.updateAnswerFlagged(a.getId(), false);
+                    answersTable.getItems().remove(a);
+                });
+                deleteBtn.setOnAction(e -> {
+                    Answer a = getTableView().getItems().get(getIndex());
+                    answerDAO.deleteAnswer(a.getId());
+                    answersTable.getItems().remove(a);
+                });
+                unflagBtn.setStyle("-fx-background-color: #fd7e14; -fx-text-fill: white; -fx-font-weight: bold;");
+                deleteBtn.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-weight: bold;");
+            }
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    HBox box = new HBox(8, unflagBtn, deleteBtn);
+                    setGraphic(box);
+                }
+            }
+        });
+        answersTable.getColumns().addAll(aContentCol, aAuthorCol, aDateCol, aActionCol);
+        answersTable.setPlaceholder(new Label("No flagged answers."));
+        answersTable.getItems().addAll(answerDAO.getFlaggedAnswers());
+
+        flaggedPanel.getChildren().addAll(questionsLabel, questionsTable, answersLabel, answersTable);
+        return flaggedPanel;
+    }
+
+    private VBox createUserManagementTab() {
+        VBox userPanel = new VBox(20);
+        userPanel.setPadding(new Insets(10));
+
+        Label usersLabel = new Label("All Users");
+        usersLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        usersLabel.setStyle("-fx-text-fill: #00FF7F;");
+
+        TableView<User> usersTable = new TableView<>();
+        usersTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        TableColumn<User, String> nameCol = new TableColumn<>("Name");
+        nameCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getName()));
+        TableColumn<User, String> emailCol = new TableColumn<>("Email");
+        emailCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().getEmail()));
+        TableColumn<User, String> roleCol = new TableColumn<>("Role");
+        roleCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().isAdmin() ? "Admin" : "User"));
+        TableColumn<User, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(data -> new javafx.beans.property.SimpleStringProperty(data.getValue().isBanned() ? "Banned" : "Active"));
+        TableColumn<User, Void> actionCol = new TableColumn<>("Actions");
+        actionCol.setCellFactory(col -> new TableCell<>() {
+            private final Button banBtn = new Button();
+            private final Button adminBtn = new Button();
+            {
+                banBtn.setOnAction(e -> {
+                    User u = getTableView().getItems().get(getIndex());
+                    boolean newBanned = !u.isBanned();
+                    if (userDAO.updateUserBanned(u.getId(), newBanned)) {
+                        u.setBanned(newBanned);
+                        usersTable.refresh();
+                    } else {
+                        showAlert("Error", "Failed to update ban status.");
+                    }
+                });
+                adminBtn.setOnAction(e -> {
+                    User u = getTableView().getItems().get(getIndex());
+                    boolean newAdmin = !u.isAdmin();
+                    if (userDAO.updateUserAdmin(u.getId(), newAdmin)) {
+                        u.setAdmin(newAdmin);
+                        usersTable.refresh();
+                    } else {
+                        showAlert("Error", "Failed to update admin status.");
+                    }
+                });
+                banBtn.setStyle("-fx-background-color: #dc3545; -fx-text-fill: white; -fx-font-weight: bold;");
+                adminBtn.setStyle("-fx-background-color: #fd7e14; -fx-text-fill: white; -fx-font-weight: bold;");
+            }
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    User u = getTableView().getItems().get(getIndex());
+                    banBtn.setText(u.isBanned() ? "Unban" : "Ban");
+                    adminBtn.setText(u.isAdmin() ? "Demote" : "Promote");
+                    // Prevent self-demotion/ban
+                    if (currentUser != null && u.getId() == currentUser.getId()) {
+                        banBtn.setDisable(true);
+                        adminBtn.setDisable(true);
+                    } else {
+                        banBtn.setDisable(false);
+                        adminBtn.setDisable(false);
+                    }
+                    HBox box = new HBox(8, banBtn, adminBtn);
+                    setGraphic(box);
+                }
+            }
+        });
+        usersTable.getColumns().addAll(nameCol, emailCol, roleCol, statusCol, actionCol);
+        usersTable.setPlaceholder(new Label("No users found."));
+        usersTable.getItems().addAll(userDAO.getAllUsers());
+
+        userPanel.getChildren().addAll(usersLabel, usersTable);
+        return userPanel;
     }
     
     public static void main(String[] args) {
