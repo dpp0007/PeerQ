@@ -199,39 +199,45 @@ public class PeerQMainApplication extends Application {
     }
     
     private HBox createHeader() {
-        HBox header = new HBox(20);
-        header.setPadding(new Insets(15));
+        HBox header = new HBox(24);
+        header.setPadding(new Insets(16, 24, 16, 24));
         header.getStyleClass().add("header");
-        header.setPrefHeight(60);
+        header.setPrefHeight(70);
+        header.setAlignment(Pos.CENTER_LEFT);
         
         // Logo - Text instead of image
         Label logoLabel = new Label("Peer Q");
-        logoLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: white; -fx-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;");
+        logoLabel.setStyle("-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: white; -fx-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -fx-effect: dropshadow(gaussian, rgba(255, 255, 255, 0.1), 1, 0, 0, 0);");
         
         // Navigation
-        HBox nav = new HBox(20);
+        HBox nav = new HBox(24);
+        nav.setAlignment(Pos.CENTER_LEFT);
         Button homeBtn = createNavButton("Home");
         Button askQuestionBtn = createNavButton("Ask Question");
         nav.getChildren().addAll(homeBtn, askQuestionBtn);
         
         // Search bar with icon
-        HBox searchContainer = new HBox(8);
+        HBox searchContainer = new HBox(12);
         searchContainer.setAlignment(Pos.CENTER_LEFT);
-        searchContainer.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-padding: 4px 8px;");
+        searchContainer.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-border-radius: 6px; -fx-background-radius: 6px; -fx-padding: 8px 12px; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 1, 0, 0, 0);");
         
         // Search icon (using Unicode character)
         Label searchIcon = new Label("🔍");
-        searchIcon.setStyle("-fx-text-fill: #B0B0B0; -fx-font-size: 14px;");
+        searchIcon.setStyle("-fx-text-fill: #B0B0B0; -fx-font-size: 16px;");
         
         searchField = new TextField();
         searchField.setPromptText("Search questions, topics, or users... (Press F3 to focus)");
-        searchField.setPrefWidth(280);
-        searchField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #E0E0E0; -fx-padding: 8px 0px;");
+        searchField.setPrefWidth(320);
+        searchField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #E0E0E0; -fx-padding: 8px 0px; -fx-font-size: 14px;");
         
         searchContainer.getChildren().addAll(searchIcon, searchField);
         
+        // Spacer to push auth buttons to the right
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
         // Auth buttons
-        authButtons = new HBox(8);
+        authButtons = new HBox(12);
         authButtons.setAlignment(Pos.CENTER_RIGHT);
         loginBtn = createTextButton("Log In");
         registerBtn = createTextButton("Register");
@@ -247,9 +253,8 @@ public class PeerQMainApplication extends Application {
         logoutBtn.setPrefWidth(80);
         logoutBtn.setPrefHeight(32);
         
-        // Add components to header
-        header.getChildren().addAll(logoLabel, nav, searchContainer, authButtons, userLabel, logoutBtn);
-        HBox.setHgrow(nav, Priority.ALWAYS);
+        // Add components to header with proper spacing
+        header.getChildren().addAll(logoLabel, nav, searchContainer, spacer, authButtons, userLabel, logoutBtn);
         
         // Initialize header state (logged out)
         updateHeaderForLoggedOutUser();
@@ -300,23 +305,26 @@ public class PeerQMainApplication extends Application {
     }
     
     private VBox createQuestionList() {
-        VBox panel = new VBox(20);
-        panel.setPadding(new Insets(20));
+        VBox panel = new VBox(24);
+        panel.setPadding(new Insets(24, 32, 24, 32));
         panel.setStyle("-fx-background-color: #121212;");
         
         // Header with title and category filter on the right
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
+        header.setPadding(new Insets(0, 0, 16, 0));
         
         Label title = new Label("Recent Questions");
-        title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        title.setStyle("-fx-text-fill: #00FF7F;");
+        title.setFont(Font.font("Arial", FontWeight.BOLD, 28));
+        title.setStyle("-fx-text-fill: #00FF7F; -fx-effect: dropshadow(gaussian, rgba(0, 255, 127, 0.1), 1, 0, 0, 0);");
         
-        // Category filter moved to the right
+        // Category filter moved to the right - made smaller and more proportional
         categoryFilter = new ComboBox<>();
         categoryFilter.getItems().addAll("All Categories", "Academics", "Campus Life", "Career", "Technology", "Miscellaneous");
         categoryFilter.setValue("All Categories");
-        categoryFilter.setPrefWidth(150);
+        categoryFilter.setPrefWidth(140);
+        categoryFilter.setPrefHeight(32);
+        categoryFilter.setStyle("-fx-font-size: 12px;");
         
         // Add event handlers for search and filter
         if (searchField != null) {
@@ -334,18 +342,30 @@ public class PeerQMainApplication extends Application {
         
         header.getChildren().addAll(title, spacer, categoryFilter);
         
-        // Questions list
-        questionsListContainer = new VBox(10);
+        // Questions list with proper scrolling
+        questionsListContainer = new VBox(16);
         questionsListContainer.setStyle("-fx-background-color: #121212;");
+        questionsListContainer.setMinHeight(400); // Ensure minimum height for scrolling
         
         // Load real questions from database
         loadQuestionsFromDatabase(questionsListContainer);
         
+        // Enhanced ScrollPane with better scrolling behavior
         ScrollPane scrollPane = new ScrollPane(questionsListContainer);
         scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(false); // Allow vertical scrolling
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setStyle("-fx-background-color: #121212; -fx-border-color: transparent;");
+        scrollPane.setPadding(new Insets(8, 0, 8, 0));
+        
+        // Set preferred height to ensure scrolling works properly
+        scrollPane.setPrefHeight(600);
+        scrollPane.setMaxHeight(Double.MAX_VALUE);
         
         panel.getChildren().addAll(header, scrollPane);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS); // Allow scroll pane to grow
+        
         return panel;
     }
     
@@ -376,7 +396,7 @@ public class PeerQMainApplication extends Application {
         Question q1 = new Question();
         q1.setId(1);
         q1.setTitle("How to prepare for final exams?");
-        q1.setBody("I'm struggling with time management for my final exams. Any tips?");
+        q1.setBody("I'm struggling with time management for my final exams. Any tips on how to organize my study schedule effectively?");
         q1.setCategory("Academics");
         q1.setUserName("John Doe");
         q1.setCreatedAt("2025-06-09 10:42:00");
@@ -387,7 +407,7 @@ public class PeerQMainApplication extends Application {
         Question q2 = new Question();
         q2.setId(2);
         q2.setTitle("Best places to study on campus?");
-        q2.setBody("Looking for quiet places to study during exam season.");
+        q2.setBody("Looking for quiet places to study during exam season. Any recommendations for the best study spots?");
         q2.setCategory("Campus Life");
         q2.setUserName("Jane Smith");
         q2.setCreatedAt("2025-06-09 08:15:00");
@@ -398,7 +418,7 @@ public class PeerQMainApplication extends Application {
         Question q3 = new Question();
         q3.setId(3);
         q3.setTitle("Career advice for computer science students");
-        q3.setBody("What are the best career paths for CS students after graduation?");
+        q3.setBody("What are the best career paths for CS students after graduation? Looking for both industry and research options.");
         q3.setCategory("Career");
         q3.setUserName("Mike Johnson");
         q3.setCreatedAt("2025-06-08 14:30:00");
@@ -409,12 +429,78 @@ public class PeerQMainApplication extends Application {
         Question q4 = new Question();
         q4.setId(4);
         q4.setTitle("Best programming languages to learn in 2025");
-        q4.setBody("Which programming languages are most in demand for job market?");
+        q4.setBody("Which programming languages are most in demand for job market? Should I focus on Python, JavaScript, or something else?");
         q4.setCategory("Technology");
         q4.setUserName("Sarah Wilson");
         q4.setCreatedAt("2025-06-08 16:45:00");
         q4.setAnswerCount(12);
         sampleQuestions.add(q4);
+        
+        // Sample question 5
+        Question q5 = new Question();
+        q5.setId(5);
+        q5.setTitle("How to balance work and studies?");
+        q5.setBody("I'm working part-time while studying full-time. Any advice on managing both responsibilities effectively?");
+        q5.setCategory("Academics");
+        q5.setUserName("Alex Chen");
+        q5.setCreatedAt("2025-06-08 12:20:00");
+        q5.setAnswerCount(4);
+        sampleQuestions.add(q5);
+        
+        // Sample question 6
+        Question q6 = new Question();
+        q6.setId(6);
+        q6.setTitle("Student housing recommendations");
+        q6.setBody("Looking for affordable student housing near campus. Any tips on finding good apartments or dorm options?");
+        q6.setCategory("Campus Life");
+        q6.setUserName("Emily Davis");
+        q6.setCreatedAt("2025-06-08 09:30:00");
+        q6.setAnswerCount(6);
+        sampleQuestions.add(q6);
+        
+        // Sample question 7
+        Question q7 = new Question();
+        q7.setId(7);
+        q7.setTitle("Internship opportunities for engineering students");
+        q7.setBody("What are the best companies offering internships for engineering students? How to prepare for internship applications?");
+        q7.setCategory("Career");
+        q7.setUserName("David Brown");
+        q7.setCreatedAt("2025-06-07 18:15:00");
+        q7.setAnswerCount(8);
+        sampleQuestions.add(q7);
+        
+        // Sample question 8
+        Question q8 = new Question();
+        q8.setId(8);
+        q8.setTitle("Machine Learning vs Data Science");
+        q8.setBody("What's the difference between Machine Learning and Data Science? Which field has better career prospects?");
+        q8.setCategory("Technology");
+        q8.setUserName("Lisa Wang");
+        q8.setCreatedAt("2025-06-07 15:45:00");
+        q8.setAnswerCount(9);
+        sampleQuestions.add(q8);
+        
+        // Sample question 9
+        Question q9 = new Question();
+        q9.setId(9);
+        q9.setTitle("Study group formation tips");
+        q9.setBody("How to form effective study groups? What's the ideal group size and how to keep everyone motivated?");
+        q9.setCategory("Academics");
+        q9.setUserName("Tom Anderson");
+        q9.setCreatedAt("2025-06-07 11:20:00");
+        q9.setAnswerCount(5);
+        sampleQuestions.add(q9);
+        
+        // Sample question 10
+        Question q10 = new Question();
+        q10.setId(10);
+        q10.setTitle("Campus events and activities");
+        q10.setBody("What are some fun campus events and activities to participate in? Looking to make new friends and get involved.");
+        q10.setCategory("Campus Life");
+        q10.setUserName("Rachel Green");
+        q10.setCreatedAt("2025-06-07 08:30:00");
+        q10.setAnswerCount(7);
+        sampleQuestions.add(q10);
         
         return sampleQuestions;
     }
@@ -460,28 +546,36 @@ public class PeerQMainApplication extends Application {
     }
     
     private VBox createQuestionCardFromDB(Question question) {
-        VBox card = new VBox(10);
-        card.setPadding(new Insets(15));
+        VBox card = new VBox(16);
+        card.setPadding(new Insets(20));
         card.getStyleClass().add("question-card");
         
         Label titleLabel = new Label(question.getTitle());
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        titleLabel.setStyle("-fx-text-fill: #00FF7F;");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        titleLabel.setStyle("-fx-text-fill: #00FF7F; -fx-effect: dropshadow(gaussian, rgba(0, 255, 127, 0.1), 1, 0, 0, 0);");
+        titleLabel.setWrapText(true);
         
         Label previewLabel = new Label(question.getBody());
         previewLabel.setTextFill(Color.rgb(204, 204, 204));
+        previewLabel.setWrapText(true);
         
-        HBox meta = new HBox(10);
-        meta.getChildren().addAll(
-            new Label("Posted by " + (question != null ? question.getUserName() : "John Doe")),
-            new Label(formatDate(question != null ? question.getCreatedAt() : "2 hours ago")),
-            new Label(question != null ? question.getCategory() : "Academics")
-        );
-        meta.getChildren().forEach(node -> {
-            if (node instanceof Label) {
-                ((Label) node).setTextFill(Color.rgb(204, 204, 204));
-            }
-        });
+        HBox meta = new HBox(16);
+        meta.setAlignment(Pos.CENTER_LEFT);
+        
+        Label authorLabel = new Label("Posted by " + (question != null ? question.getUserName() : "John Doe"));
+        authorLabel.setTextFill(Color.rgb(204, 204, 204));
+        authorLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+        
+        Label timeLabel = new Label(formatDate(question != null ? question.getCreatedAt() : "2 hours ago"));
+        timeLabel.setTextFill(Color.rgb(204, 204, 204));
+        timeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
+        
+        Label categoryLabel = new Label(question != null ? question.getCategory() : "Academics");
+        categoryLabel.setTextFill(Color.rgb(106, 90, 205));
+        categoryLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        categoryLabel.setStyle("-fx-background-color: rgba(106, 90, 205, 0.1); -fx-padding: 4px 8px; -fx-background-radius: 4px;");
+        
+        meta.getChildren().addAll(authorLabel, timeLabel, categoryLabel);
         
         card.getChildren().addAll(titleLabel, previewLabel, meta);
         
@@ -492,26 +586,34 @@ public class PeerQMainApplication extends Application {
     }
     
     private VBox createQuestionCard(String title, String preview, String category, String answers, String time) {
-        VBox card = new VBox(10);
-        card.setPadding(new Insets(15));
+        VBox card = new VBox(16);
+        card.setPadding(new Insets(20));
         card.getStyleClass().add("question-card");
         
         Label titleLabel = new Label(title);
-        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        titleLabel.setStyle("-fx-text-fill: #00FF7F;");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        titleLabel.setStyle("-fx-text-fill: #00FF7F; -fx-effect: dropshadow(gaussian, rgba(0, 255, 127, 0.1), 1, 0, 0, 0);");
+        titleLabel.setWrapText(true);
         
         Label previewLabel = new Label(preview);
         previewLabel.setTextFill(Color.rgb(204, 204, 204));
+        previewLabel.setWrapText(true);
         
-        HBox meta = new HBox(10);
+        HBox meta = new HBox(16);
+        meta.setAlignment(Pos.CENTER_LEFT);
+        
         Label categoryLabel = new Label(category);
-        categoryLabel.setTextFill(Color.rgb(106, 90, 205)); // Purple for category
+        categoryLabel.setTextFill(Color.rgb(106, 90, 205));
+        categoryLabel.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        categoryLabel.setStyle("-fx-background-color: rgba(106, 90, 205, 0.1); -fx-padding: 4px 8px; -fx-background-radius: 4px;");
         
         Label answersLabel = new Label(answers);
         answersLabel.setTextFill(Color.rgb(204, 204, 204));
+        answersLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
         
         Label timeLabel = new Label(time);
         timeLabel.setTextFill(Color.rgb(204, 204, 204));
+        timeLabel.setFont(Font.font("Arial", FontWeight.NORMAL, 12));
         
         meta.getChildren().addAll(categoryLabel, answersLabel, timeLabel);
         
