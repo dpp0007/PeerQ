@@ -74,7 +74,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.peerq.WebMain</mainClass>
+              <mainClass>com.peerq.desktopui.PeerQMainApplication</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
@@ -145,7 +145,7 @@
         <artifactId>javafx-maven-plugin</artifactId>
         <version>0.0.8</version>
         <configuration>
-          <mainClass>com.peerq.DesktopMain</mainClass>
+          <mainClass>com.peerq.desktopui.PeerQMainApplication</mainClass>
         </configuration>
       </plugin>
     </plugins>

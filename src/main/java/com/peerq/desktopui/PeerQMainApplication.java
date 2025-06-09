@@ -9,67 +9,150 @@ import javafx.stage.Stage;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+
+// Import database-related classes
+import com.peerq.dao.QuestionDAO;
+import com.peerq.dao.UserDAO;
+import com.peerq.dao.AnswerDAO;
+import com.peerq.model.Question;
+import com.peerq.model.User;
+import com.peerq.model.Answer;
+import com.peerq.util.DBConnection;
+
+import java.sql.SQLException;
+import java.util.List;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.text.ParseException;
 
 public class PeerQMainApplication extends Application {
-    private static final Color PRIMARY_COLOR = Color.rgb(0, 120, 212);
-    private static final Color BACKGROUND_COLOR = Color.WHITE;
-    private static final Color BORDER_COLOR = Color.rgb(230, 230, 230);
-    private static final Color TEXT_COLOR = Color.rgb(100, 100, 100);
+    private static final Color PRIMARY_COLOR = Color.rgb(0, 255, 127); // Green accent
+    private static final Color BACKGROUND_COLOR = Color.rgb(18, 18, 18); // Dark background
+    private static final Color CARD_BACKGROUND = Color.rgb(26, 26, 26); // Card background
+    private static final Color BORDER_COLOR = Color.rgb(68, 68, 68); // Border color
+    private static final Color TEXT_COLOR = Color.rgb(224, 224, 224); // Text color
     
     private StackPane mainContent;
     private VBox questionList;
     private VBox questionDetail;
     private VBox askQuestion;
-    private VBox authPanel;
+    private VBox loginPanel;
+    private VBox registerPanel;
+    
+    // Database DAOs
+    private QuestionDAO questionDAO;
+    private UserDAO userDAO;
+    private AnswerDAO answerDAO;
+    
+    // Current user
+    private User currentUser;
     
     @Override
     public void start(Stage primaryStage) {
-        // Create main layout
-        BorderPane root = new BorderPane();
-        root.setStyle("-fx-background-color: white;");
-        
-        // Create header
-        HBox header = createHeader();
-        root.setTop(header);
-        
-        // Create main content area
-        mainContent = new StackPane();
-        mainContent.setStyle("-fx-background-color: white;");
-        
-        // Initialize all panels
-        questionList = createQuestionList();
-        questionDetail = createQuestionDetail();
-        askQuestion = createAskQuestion();
-        authPanel = createAuthPanel();
-        
-        // Add all panels to main content
-        mainContent.getChildren().addAll(questionList, questionDetail, askQuestion, authPanel);
-        
-        // Show question list by default
-        showQuestionList();
-        
-        root.setCenter(mainContent);
-        
-        // Create scene
-        Scene scene = new Scene(root, 1200, 800);
-        scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
-        
-        // Configure stage
-        primaryStage.setTitle("PeerQ - College Community Discourse Platform");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        try {
+            // Initialize database connections
+            initializeDatabase();
+            
+            // Create main layout
+            BorderPane root = new BorderPane();
+            root.setStyle("-fx-background-color: #121212;");
+            
+            // Create header
+            HBox header = createHeader();
+            root.setTop(header);
+            
+            // Create main content area
+            mainContent = new StackPane();
+            mainContent.setStyle("-fx-background-color: #121212;");
+            
+            // Initialize all panels
+            questionList = createQuestionList();
+            questionDetail = createQuestionDetail();
+            askQuestion = createAskQuestion();
+            loginPanel = createLoginPanel();
+            registerPanel = createRegisterPanel();
+            
+            // Add all panels to main content
+            mainContent.getChildren().addAll(questionList, questionDetail, askQuestion, loginPanel, registerPanel);
+            
+            // Show question list by default
+            showQuestionList();
+            
+            root.setCenter(mainContent);
+            
+            // Create scene
+            Scene scene = new Scene(root, 1200, 800);
+            scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
+            
+            // Configure stage
+            primaryStage.setTitle("PeerQ - College Community Discourse Platform");
+            primaryStage.setScene(scene);
+            primaryStage.setMinWidth(800);
+            primaryStage.setMinHeight(600);
+            
+            // Set up window close handler
+            primaryStage.setOnCloseRequest(event -> {
+                System.out.println("PeerQ Desktop Application closing...");
+                System.exit(0);
+            });
+            
+            primaryStage.show();
+            
+        } catch (Exception e) {
+            System.err.println("Error starting PeerQ Desktop Application: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Show error dialog
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Application Error");
+            alert.setHeaderText("Failed to start PeerQ");
+            alert.setContentText("An error occurred while starting the application: " + e.getMessage());
+            alert.showAndWait();
+            
+            System.exit(1);
+        }
+    }
+    
+    private void initializeDatabase() {
+        try {
+            questionDAO = new QuestionDAO();
+            userDAO = new UserDAO();
+            answerDAO = new AnswerDAO();
+            System.out.println("Database connection initialized successfully");
+        } catch (Exception e) {
+            System.err.println("Error initializing database: " + e.getMessage());
+            throw new RuntimeException("Failed to initialize database", e);
+        }
+    }
+    
+    private String formatDate(String dateString) {
+        try {
+            // Parse the date string (assuming it's in a standard format)
+            SimpleDateFormat inputFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date date = inputFormat.parse(dateString);
+            
+            // Format to desired output format
+            SimpleDateFormat outputFormat = new SimpleDateFormat("d MMMM yyyy HH:mm");
+            return outputFormat.format(date);
+        } catch (ParseException e) {
+            // If parsing fails, return the original string
+            return dateString;
+        }
     }
     
     private HBox createHeader() {
         HBox header = new HBox(20);
         header.setPadding(new Insets(15));
-        header.setStyle("-fx-background-color: white; -fx-border-color: #e6e6e6; -fx-border-width: 0 0 1 0;");
+        header.getStyleClass().add("header");
         header.setPrefHeight(60);
         
         // Logo
         Label logo = new Label("PeerQ");
-        logo.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        logo.setStyle("-fx-text-fill: #0078d4;");
+        logo.getStyleClass().add("logo");
         
         // Navigation
         HBox nav = new HBox(20);
@@ -81,7 +164,7 @@ public class PeerQMainApplication extends Application {
         TextField searchField = new TextField();
         searchField.setPromptText("Search questions, topics, or users...");
         searchField.setPrefWidth(300);
-        searchField.setStyle("-fx-background-color: white; -fx-border-color: #e6e6e6; -fx-border-radius: 4;");
+        searchField.getStyleClass().add("search-field");
         
         // Auth buttons
         HBox authButtons = new HBox(10);
@@ -96,94 +179,152 @@ public class PeerQMainApplication extends Application {
         // Add event handlers
         homeBtn.setOnAction(e -> showQuestionList());
         askQuestionBtn.setOnAction(e -> showAskQuestion());
-        loginBtn.setOnAction(e -> showAuth());
-        registerBtn.setOnAction(e -> showAuth());
+        loginBtn.setOnAction(e -> showLogin());
+        registerBtn.setOnAction(e -> showRegister());
         
         return header;
     }
     
     private Button createNavButton(String text) {
         Button button = new Button(text);
-        button.setStyle("-fx-background-color: transparent; -fx-text-fill: #0078d4; -fx-font-size: 14; -fx-font-weight: bold;");
-        button.setOnMouseEntered(e -> button.setStyle("-fx-background-color: transparent; -fx-text-fill: #005a9e; -fx-font-size: 14; -fx-font-weight: bold;"));
-        button.setOnMouseExited(e -> button.setStyle("-fx-background-color: transparent; -fx-text-fill: #0078d4; -fx-font-size: 14; -fx-font-weight: bold;"));
+        button.getStyleClass().add("nav-button");
         return button;
     }
     
     private Button createTextButton(String text) {
         Button button = new Button(text);
-        button.setStyle("-fx-background-color: transparent; -fx-text-fill: #0078d4; -fx-font-size: 14;");
-        button.setOnMouseEntered(e -> button.setStyle("-fx-background-color: transparent; -fx-text-fill: #005a9e; -fx-font-size: 14;"));
-        button.setOnMouseExited(e -> button.setStyle("-fx-background-color: transparent; -fx-text-fill: #0078d4; -fx-font-size: 14;"));
+        button.getStyleClass().add("text-button");
         return button;
     }
     
     private VBox createQuestionList() {
         VBox panel = new VBox(20);
         panel.setPadding(new Insets(20));
-        panel.setStyle("-fx-background-color: white;");
+        panel.setStyle("-fx-background-color: #121212;");
         
-        // Header
+        // Header with title and category filter on the right
         HBox header = new HBox();
-        header.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+        header.setAlignment(Pos.CENTER_LEFT);
         
         Label title = new Label("Recent Questions");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-        title.setStyle("-fx-text-fill: #0078d4;");
+        title.setStyle("-fx-text-fill: #00FF7F;");
         
+        // Category filter moved to the right
         ComboBox<String> categoryFilter = new ComboBox<>();
         categoryFilter.getItems().addAll("All Categories", "Academics", "Campus Life", "Career", "Technology", "Miscellaneous");
         categoryFilter.setValue("All Categories");
         categoryFilter.setPrefWidth(150);
-        categoryFilter.setStyle("-fx-background-color: white; -fx-border-color: #e6e6e6; -fx-border-radius: 4;");
         
-        header.getChildren().addAll(title, categoryFilter);
-        HBox.setHgrow(title, Priority.ALWAYS);
-        HBox.setMargin(categoryFilter, new Insets(0, 0, 0, 20));
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        header.getChildren().addAll(title, spacer, categoryFilter);
         
         // Questions list
         VBox questionsList = new VBox(10);
-        questionsList.setStyle("-fx-background-color: white;");
+        questionsList.setStyle("-fx-background-color: #121212;");
         
-        // Add sample questions
-        questionsList.getChildren().addAll(
-            createQuestionCard("How to prepare for final exams?", 
-                "I'm struggling with time management for my final exams. Any tips?",
-                "Academics", "5 answers", "2 hours ago"),
-            createQuestionCard("Best places to study on campus?",
-                "Looking for quiet places to study during exam season.",
-                "Campus Life", "3 answers", "5 hours ago")
-        );
+        // Load real questions from database
+        loadQuestionsFromDatabase(questionsList);
         
         ScrollPane scrollPane = new ScrollPane(questionsList);
         scrollPane.setFitToWidth(true);
-        scrollPane.setStyle("-fx-background-color: white; -fx-border-color: transparent;");
+        scrollPane.setStyle("-fx-background-color: #121212; -fx-border-color: transparent;");
         
         panel.getChildren().addAll(header, scrollPane);
         return panel;
     }
     
+    private void loadQuestionsFromDatabase(VBox questionsList) {
+        try {
+            List<Question> questions = questionDAO.getAllQuestions();
+            
+            if (questions.isEmpty()) {
+                // Show sample questions if database is empty
+                questionsList.getChildren().addAll(
+                    createQuestionCard("How to prepare for final exams?", 
+                        "I'm struggling with time management for my final exams. Any tips?",
+                        "Academics", "5 answers", "9 June 2025 10:42"),
+                    createQuestionCard("Best places to study on campus?",
+                        "Looking for quiet places to study during exam season.",
+                        "Campus Life", "3 answers", "9 June 2025 08:15")
+                );
+            } else {
+                // Show real questions from database
+                for (Question question : questions) {
+                    questionsList.getChildren().add(
+                        createQuestionCardFromDB(question)
+                    );
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading questions: " + e.getMessage());
+            // Fallback to sample questions
+            questionsList.getChildren().addAll(
+                createQuestionCard("How to prepare for final exams?", 
+                    "I'm struggling with time management for my final exams. Any tips?",
+                    "Academics", "5 answers", "9 June 2025 10:42"),
+                createQuestionCard("Best places to study on campus?",
+                    "Looking for quiet places to study during exam season.",
+                    "Campus Life", "3 answers", "9 June 2025 08:15")
+            );
+        }
+    }
+    
+    private VBox createQuestionCardFromDB(Question question) {
+        VBox card = new VBox(10);
+        card.setPadding(new Insets(15));
+        card.getStyleClass().add("question-card");
+        
+        Label titleLabel = new Label(question.getTitle());
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
+        titleLabel.setStyle("-fx-text-fill: #00FF7F;");
+        
+        Label previewLabel = new Label(question.getBody());
+        previewLabel.setTextFill(Color.rgb(176, 176, 176));
+        
+        HBox meta = new HBox(10);
+        Label categoryLabel = new Label(question.getCategory());
+        categoryLabel.setTextFill(Color.rgb(106, 90, 205)); // Purple for category
+        
+        Label answersLabel = new Label(question.getAnswerCount() + " answers");
+        answersLabel.setTextFill(Color.rgb(176, 176, 176));
+        
+        Label timeLabel = new Label(formatDate(question.getCreatedAt()));
+        timeLabel.setTextFill(Color.rgb(176, 176, 176));
+        
+        meta.getChildren().addAll(categoryLabel, answersLabel, timeLabel);
+        
+        card.getChildren().addAll(titleLabel, previewLabel, meta);
+        
+        // Add click handler
+        card.setOnMouseClicked(e -> showQuestionDetail(question));
+        
+        return card;
+    }
+    
     private VBox createQuestionCard(String title, String preview, String category, String answers, String time) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(15));
-        card.setStyle("-fx-background-color: white; -fx-border-color: #e6e6e6; -fx-border-width: 0 0 1 0;");
+        card.getStyleClass().add("question-card");
         
         Label titleLabel = new Label(title);
         titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 16));
-        titleLabel.setStyle("-fx-text-fill: #0078d4;");
+        titleLabel.setStyle("-fx-text-fill: #00FF7F;");
         
         Label previewLabel = new Label(preview);
-        previewLabel.setTextFill(Color.rgb(100, 100, 100));
+        previewLabel.setTextFill(Color.rgb(176, 176, 176));
         
         HBox meta = new HBox(10);
         Label categoryLabel = new Label(category);
-        categoryLabel.setTextFill(Color.rgb(0, 120, 212));
+        categoryLabel.setTextFill(Color.rgb(106, 90, 205)); // Purple for category
         
         Label answersLabel = new Label(answers);
-        answersLabel.setTextFill(Color.rgb(100, 100, 100));
+        answersLabel.setTextFill(Color.rgb(176, 176, 176));
         
         Label timeLabel = new Label(time);
-        timeLabel.setTextFill(Color.rgb(100, 100, 100));
+        timeLabel.setTextFill(Color.rgb(176, 176, 176));
         
         meta.getChildren().addAll(categoryLabel, answersLabel, timeLabel);
         
@@ -196,35 +337,46 @@ public class PeerQMainApplication extends Application {
     }
     
     private VBox createQuestionDetail() {
+        return createQuestionDetail(null);
+    }
+    
+    private VBox createQuestionDetail(Question question) {
         VBox panel = new VBox(20);
         panel.setPadding(new Insets(20));
-        panel.setStyle("-fx-background-color: white;");
+        panel.setStyle("-fx-background-color: #121212;");
         
         // Back button
         Button backButton = new Button("← Back to Questions");
-        backButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #0078d4;");
+        backButton.getStyleClass().add("back-button");
         backButton.setOnAction(e -> showQuestionList());
         
         // Question content
         VBox questionContent = new VBox(10);
-        Label title = new Label("How to prepare for final exams?");
+        Label title = new Label(question != null ? question.getTitle() : "How to prepare for final exams?");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        title.setStyle("-fx-text-fill: #00FF7F;");
         
         HBox meta = new HBox(10);
         meta.getChildren().addAll(
-            new Label("Posted by John Doe"),
-            new Label("2 hours ago"),
-            new Label("Academics")
+            new Label("Posted by " + (question != null ? question.getUserName() : "John Doe")),
+            new Label(formatDate(question != null ? question.getCreatedAt() : "2 hours ago")),
+            new Label(question != null ? question.getCategory() : "Academics")
         );
+        meta.getChildren().forEach(node -> {
+            if (node instanceof Label) {
+                ((Label) node).setTextFill(Color.rgb(176, 176, 176));
+            }
+        });
         
         TextArea content = new TextArea(
+            question != null ? question.getBody() : 
             "I'm struggling with time management for my final exams. " +
             "I have 5 subjects to prepare for and only 2 weeks left. " +
             "Any tips on how to organize my study schedule effectively?"
         );
         content.setEditable(false);
         content.setWrapText(true);
-        content.setStyle("-fx-background-color: white; -fx-border-color: transparent;");
+        content.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-text-fill: #E0E0E0; -fx-control-inner-background: #1A1A1A;");
         
         questionContent.getChildren().addAll(title, meta, content);
         
@@ -232,33 +384,50 @@ public class PeerQMainApplication extends Application {
         VBox answersSection = new VBox(20);
         Label answersTitle = new Label("Answers");
         answersTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        answersTitle.setStyle("-fx-text-fill: #00FF7F;");
         
         VBox answersList = new VBox(10);
-        answersList.getChildren().addAll(
-            createAnswerCard("Jane Smith", "2 hours ago",
-                "Here's what worked for me:\n\n" +
-                "1. Create a study schedule with specific time slots for each subject\n" +
-                "2. Take regular breaks (25 minutes study, 5 minutes break)\n" +
-                "3. Use active recall techniques instead of passive reading\n" +
-                "4. Form study groups for difficult topics\n" +
-                "5. Get enough sleep and exercise"),
-            createAnswerCard("Mike Johnson", "1 hour ago",
-                "I recommend using the Pomodoro Technique. Study for 25 minutes, " +
-                "then take a 5-minute break. After 4 pomodoros, take a longer break. " +
-                "This helps maintain focus and prevents burnout.")
-        );
+        
+        if (question != null) {
+            // Load real answers from database
+            try {
+                List<Answer> answers = answerDAO.getAnswersByQuestionId(question.getId());
+                for (Answer answer : answers) {
+                    answersList.getChildren().add(createAnswerCard(answer));
+                }
+            } catch (Exception e) {
+                System.err.println("Error loading answers: " + e.getMessage());
+            }
+        } else {
+            // Sample answers
+            answersList.getChildren().addAll(
+                createAnswerCard("Jane Smith", "9 June 2025 10:45",
+                    "Here's what worked for me:\n\n" +
+                    "1. Create a study schedule with specific time slots for each subject\n" +
+                    "2. Take regular breaks (25 minutes study, 5 minutes break)\n" +
+                    "3. Use active recall techniques instead of passive reading\n" +
+                    "4. Form study groups for difficult topics\n" +
+                    "5. Get enough sleep and exercise"),
+                createAnswerCard("Mike Johnson", "9 June 2025 11:30",
+                    "I recommend using the Pomodoro Technique. Study for 25 minutes, " +
+                    "then take a 5-minute break. After 4 pomodoros, take a longer break. " +
+                    "This helps maintain focus and prevents burnout.")
+            );
+        }
         
         // Answer form
         VBox answerForm = new VBox(10);
         Label formTitle = new Label("Your Answer");
         formTitle.setFont(Font.font("Arial", FontWeight.BOLD, 18));
+        formTitle.setStyle("-fx-text-fill: #00FF7F;");
         
         TextArea answerInput = new TextArea();
         answerInput.setPromptText("Write your answer here...");
         answerInput.setPrefRowCount(6);
+        answerInput.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-text-fill: #E0E0E0; -fx-control-inner-background: #1A1A1A;");
         
         Button submitButton = new Button("Submit Answer");
-        submitButton.setStyle("-fx-background-color: #0078d4; -fx-text-fill: white;");
+        submitButton.getStyleClass().add("button");
         
         answerForm.getChildren().addAll(formTitle, answerInput, submitButton);
         
@@ -266,21 +435,30 @@ public class PeerQMainApplication extends Application {
         return panel;
     }
     
+    private VBox createAnswerCard(Answer answer) {
+        return createAnswerCard(answer.getUserName(), answer.getCreatedAt(), answer.getContent());
+    }
+    
     private VBox createAnswerCard(String author, String time, String content) {
         VBox card = new VBox(10);
         card.setPadding(new Insets(15));
-        card.setStyle("-fx-background-color: white; -fx-border-color: #e6e6e6; -fx-border-width: 0 0 1 0;");
+        card.getStyleClass().add("answer-card");
         
         HBox meta = new HBox(10);
         meta.getChildren().addAll(
             new Label(author),
-            new Label(time)
+            new Label(formatDate(time))
         );
+        meta.getChildren().forEach(node -> {
+            if (node instanceof Label) {
+                ((Label) node).setTextFill(Color.rgb(176, 176, 176));
+            }
+        });
         
         TextArea contentArea = new TextArea(content);
         contentArea.setEditable(false);
         contentArea.setWrapText(true);
-        contentArea.setStyle("-fx-background-color: white; -fx-border-color: transparent;");
+        contentArea.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-text-fill: #E0E0E0; -fx-control-inner-background: #1A1A1A;");
         
         card.getChildren().addAll(meta, contentArea);
         return card;
@@ -289,12 +467,14 @@ public class PeerQMainApplication extends Application {
     private VBox createAskQuestion() {
         VBox panel = new VBox(20);
         panel.setPadding(new Insets(20));
-        panel.setStyle("-fx-background-color: white;");
+        panel.setStyle("-fx-background-color: #121212;");
         
         Label title = new Label("Ask a Question");
         title.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        title.setStyle("-fx-text-fill: #00FF7F;");
         
         VBox form = new VBox(15);
+        form.getStyleClass().add("form-container");
         
         // Title field
         Label titleLabel = new Label("Title");
@@ -306,6 +486,7 @@ public class PeerQMainApplication extends Application {
         TextArea detailsArea = new TextArea();
         detailsArea.setPromptText("Provide more details about your question");
         detailsArea.setPrefRowCount(8);
+        detailsArea.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-text-fill: #E0E0E0; -fx-control-inner-background: #1A1A1A;");
         
         // Category dropdown
         Label categoryLabel = new Label("Category");
@@ -323,10 +504,10 @@ public class PeerQMainApplication extends Application {
         // Buttons
         HBox buttons = new HBox(10);
         Button postButton = new Button("Post Question");
-        postButton.setStyle("-fx-background-color: #0078d4; -fx-text-fill: white;");
+        postButton.getStyleClass().add("button");
         
         Button cancelButton = new Button("Cancel");
-        cancelButton.setStyle("-fx-background-color: transparent; -fx-text-fill: #0078d4;");
+        cancelButton.getStyleClass().add("text-button");
         
         buttons.getChildren().addAll(postButton, cancelButton);
         
@@ -341,22 +522,27 @@ public class PeerQMainApplication extends Application {
         panel.getChildren().addAll(title, form);
         
         // Add event handlers
-        postButton.setOnAction(e -> showQuestionList());
+        postButton.setOnAction(e -> {
+            // TODO: Implement question posting to database
+            showQuestionList();
+        });
         cancelButton.setOnAction(e -> showQuestionList());
         
         return panel;
     }
     
-    private VBox createAuthPanel() {
+    private VBox createLoginPanel() {
         VBox panel = new VBox(20);
         panel.setPadding(new Insets(20));
-        panel.setStyle("-fx-background-color: white;");
-        panel.setAlignment(javafx.geometry.Pos.CENTER);
+        panel.setStyle("-fx-background-color: #121212;");
+        panel.setAlignment(Pos.CENTER);
         
-        // Login form
         VBox loginForm = new VBox(15);
+        loginForm.getStyleClass().add("form-container");
+        
         Label loginTitle = new Label("Log In");
         loginTitle.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        loginTitle.setStyle("-fx-text-fill: #00FF7F;");
         
         Label emailLabel = new Label("Email");
         TextField emailField = new TextField();
@@ -367,13 +553,18 @@ public class PeerQMainApplication extends Application {
         passwordField.setPromptText("Enter your password");
         
         Button loginButton = new Button("Log In");
-        loginButton.setStyle("-fx-background-color: #0078d4; -fx-text-fill: white;");
+        loginButton.getStyleClass().add("button");
         
         HBox registerLink = new HBox();
         registerLink.getChildren().addAll(
             new Label("Don't have an account? "),
             new Hyperlink("Register")
         );
+        registerLink.getChildren().forEach(node -> {
+            if (node instanceof Label) {
+                ((Label) node).setTextFill(Color.rgb(176, 176, 176));
+            }
+        });
         
         loginForm.getChildren().addAll(
             loginTitle, emailLabel, emailField,
@@ -381,10 +572,31 @@ public class PeerQMainApplication extends Application {
             registerLink
         );
         
-        // Register form
+        // Add event handlers
+        loginButton.setOnAction(e -> {
+            // TODO: Implement login logic
+            showQuestionList();
+        });
+        
+        Hyperlink registerLinkNode = (Hyperlink) registerLink.getChildren().get(1);
+        registerLinkNode.setOnAction(e -> showRegister());
+        
+        panel.getChildren().add(loginForm);
+        return panel;
+    }
+    
+    private VBox createRegisterPanel() {
+        VBox panel = new VBox(20);
+        panel.setPadding(new Insets(20));
+        panel.setStyle("-fx-background-color: #121212;");
+        panel.setAlignment(Pos.CENTER);
+        
         VBox registerForm = new VBox(15);
+        registerForm.getStyleClass().add("form-container");
+        
         Label registerTitle = new Label("Register");
         registerTitle.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        registerTitle.setStyle("-fx-text-fill: #00FF7F;");
         
         Label nameLabel = new Label("Full Name");
         TextField nameField = new TextField();
@@ -403,13 +615,18 @@ public class PeerQMainApplication extends Application {
         confirmPasswordField.setPromptText("Confirm your password");
         
         Button registerButton = new Button("Register");
-        registerButton.setStyle("-fx-background-color: #0078d4; -fx-text-fill: white;");
+        registerButton.getStyleClass().add("button");
         
         HBox loginLink = new HBox();
         loginLink.getChildren().addAll(
             new Label("Already have an account? "),
             new Hyperlink("Log In")
         );
+        loginLink.getChildren().forEach(node -> {
+            if (node instanceof Label) {
+                ((Label) node).setTextFill(Color.rgb(176, 176, 176));
+            }
+        });
         
         registerForm.getChildren().addAll(
             registerTitle, nameLabel, nameField,
@@ -419,13 +636,16 @@ public class PeerQMainApplication extends Application {
             registerButton, loginLink
         );
         
-        // Add forms to panel
-        panel.getChildren().addAll(loginForm, registerForm);
-        
         // Add event handlers
-        loginButton.setOnAction(e -> showQuestionList());
-        registerButton.setOnAction(e -> showQuestionList());
+        registerButton.setOnAction(e -> {
+            // TODO: Implement registration logic
+            showQuestionList();
+        });
         
+        Hyperlink loginLinkNode = (Hyperlink) loginLink.getChildren().get(1);
+        loginLinkNode.setOnAction(e -> showLogin());
+        
+        panel.getChildren().add(registerForm);
         return panel;
     }
     
@@ -433,28 +653,51 @@ public class PeerQMainApplication extends Application {
         questionList.setVisible(true);
         questionDetail.setVisible(false);
         askQuestion.setVisible(false);
-        authPanel.setVisible(false);
+        loginPanel.setVisible(false);
+        registerPanel.setVisible(false);
     }
     
     private void showQuestionDetail() {
+        showQuestionDetail(null);
+    }
+    
+    private void showQuestionDetail(Question question) {
         questionList.setVisible(false);
-        questionDetail.setVisible(true);
+        questionDetail.setVisible(false);
         askQuestion.setVisible(false);
-        authPanel.setVisible(false);
+        loginPanel.setVisible(false);
+        registerPanel.setVisible(false);
+        
+        // Remove old question detail and create new one
+        mainContent.getChildren().remove(questionDetail);
+        questionDetail = createQuestionDetail(question);
+        mainContent.getChildren().add(questionDetail);
+        
+        questionDetail.setVisible(true);
     }
     
     private void showAskQuestion() {
         questionList.setVisible(false);
         questionDetail.setVisible(false);
         askQuestion.setVisible(true);
-        authPanel.setVisible(false);
+        loginPanel.setVisible(false);
+        registerPanel.setVisible(false);
     }
     
-    private void showAuth() {
+    private void showLogin() {
         questionList.setVisible(false);
         questionDetail.setVisible(false);
         askQuestion.setVisible(false);
-        authPanel.setVisible(true);
+        loginPanel.setVisible(true);
+        registerPanel.setVisible(false);
+    }
+    
+    private void showRegister() {
+        questionList.setVisible(false);
+        questionDetail.setVisible(false);
+        askQuestion.setVisible(false);
+        loginPanel.setVisible(false);
+        registerPanel.setVisible(true);
     }
     
     public static void main(String[] args) {
