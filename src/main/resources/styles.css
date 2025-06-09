@@ -354,14 +354,39 @@
     -fx-background-color: transparent;
     -fx-text-fill: #00FF7F;
     -fx-font-size: 14px;
+    -fx-padding: 8px 16px;
     -fx-cursor: hand;
     -fx-transition: all 0.15s ease;
     -fx-border: none;
-    -fx-padding: 8px 12px;
-    -fx-background-radius: 4px;
 }
 
 .back-button:hover {
-    -fx-text-fill: #43B97F;
     -fx-background-color: rgba(0, 255, 127, 0.1);
+    -fx-text-fill: #43B97F;
+    -fx-background-radius: 4px;
+}
+
+/* Logout button */
+.logout-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #FF6B6B;
+    -fx-font-size: 14px;
+    -fx-padding: 4px 12px;
+    -fx-cursor: hand;
+    -fx-transition: all 0.15s ease;
+    -fx-border: none;
+}
+
+.logout-button:hover {
+    -fx-background-color: rgba(255, 107, 107, 0.1);
+    -fx-text-fill: #FF8E8E;
+    -fx-background-radius: 4px;
+}
+
+/* User label */
+.user-label {
+    -fx-text-fill: #00FF7F;
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-padding: 4px 12px;
 } 

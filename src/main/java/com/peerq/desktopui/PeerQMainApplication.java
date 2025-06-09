@@ -28,6 +28,7 @@ import java.util.List;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.text.ParseException;
+import java.util.ArrayList;
 
 public class PeerQMainApplication extends Application {
     private static final Color PRIMARY_COLOR = Color.rgb(0, 255, 127); // Green accent
@@ -43,6 +44,18 @@ public class PeerQMainApplication extends Application {
     private VBox loginPanel;
     private VBox registerPanel;
     
+    // Search and filter components
+    private TextField searchField;
+    private ComboBox<String> categoryFilter;
+    private VBox questionsListContainer;
+    
+    // Header components for dynamic updates
+    private HBox authButtons;
+    private Button loginBtn;
+    private Button registerBtn;
+    private Label userLabel;
+    private Button logoutBtn;
+    
     // Database DAOs
     private QuestionDAO questionDAO;
     private UserDAO userDAO;
@@ -50,6 +63,9 @@ public class PeerQMainApplication extends Application {
     
     // Current user
     private User currentUser;
+    
+    // Store all questions for filtering
+    private List<Question> allQuestions = new ArrayList<>();
     
     @Override
     public void start(Stage primaryStage) {
@@ -161,26 +177,58 @@ public class PeerQMainApplication extends Application {
         nav.getChildren().addAll(homeBtn, askQuestionBtn);
         
         // Search bar
-        TextField searchField = new TextField();
+        searchField = new TextField();
         searchField.setPromptText("Search questions, topics, or users...");
         searchField.setPrefWidth(300);
         searchField.getStyleClass().add("search-field");
         
         // Auth buttons
-        HBox authButtons = new HBox(10);
-        Button loginBtn = createTextButton("Log In");
-        Button registerBtn = createTextButton("Register");
+        authButtons = new HBox(10);
+        loginBtn = createTextButton("Log In");
+        registerBtn = createTextButton("Register");
         authButtons.getChildren().addAll(loginBtn, registerBtn);
         
+        // User label
+        userLabel = new Label();
+        userLabel.getStyleClass().add("user-label");
+        
+        // Logout button
+        logoutBtn = new Button("Logout");
+        logoutBtn.getStyleClass().add("logout-button");
+        
         // Add components to header
-        header.getChildren().addAll(logo, nav, searchField, authButtons);
+        header.getChildren().addAll(logo, nav, searchField, authButtons, userLabel, logoutBtn);
         HBox.setHgrow(nav, Priority.ALWAYS);
         
+        // Initialize header state (logged out)
+        updateHeaderForLoggedOutUser();
+        
         // Add event handlers
-        homeBtn.setOnAction(e -> showQuestionList());
-        askQuestionBtn.setOnAction(e -> showAskQuestion());
-        loginBtn.setOnAction(e -> showLogin());
-        registerBtn.setOnAction(e -> showRegister());
+        homeBtn.setOnAction(e -> {
+            System.out.println("Home button clicked");
+            showQuestionList();
+        });
+        askQuestionBtn.setOnAction(e -> {
+            System.out.println("Ask Question button clicked");
+            if (currentUser == null) {
+                showAlert("Login Required", "Please log in to ask a question");
+                showLogin();
+            } else {
+                showAskQuestion();
+            }
+        });
+        loginBtn.setOnAction(e -> {
+            System.out.println("Login button clicked in header");
+            showLogin();
+        });
+        registerBtn.setOnAction(e -> {
+            System.out.println("Register button clicked in header");
+            showRegister();
+        });
+        logoutBtn.setOnAction(e -> {
+            System.out.println("Logout button clicked in header");
+            logout();
+        });
         
         return header;
     }
@@ -211,10 +259,21 @@ public class PeerQMainApplication extends Application {
         title.setStyle("-fx-text-fill: #00FF7F;");
         
         // Category filter moved to the right
-        ComboBox<String> categoryFilter = new ComboBox<>();
+        categoryFilter = new ComboBox<>();
         categoryFilter.getItems().addAll("All Categories", "Academics", "Campus Life", "Career", "Technology", "Miscellaneous");
         categoryFilter.setValue("All Categories");
         categoryFilter.setPrefWidth(150);
+        
+        // Add event handlers for search and filter
+        if (searchField != null) {
+            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                filterQuestions();
+            });
+        }
+        
+        categoryFilter.setOnAction(e -> {
+            filterQuestions();
+        });
         
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -222,13 +281,13 @@ public class PeerQMainApplication extends Application {
         header.getChildren().addAll(title, spacer, categoryFilter);
         
         // Questions list
-        VBox questionsList = new VBox(10);
-        questionsList.setStyle("-fx-background-color: #121212;");
+        questionsListContainer = new VBox(10);
+        questionsListContainer.setStyle("-fx-background-color: #121212;");
         
         // Load real questions from database
-        loadQuestionsFromDatabase(questionsList);
+        loadQuestionsFromDatabase(questionsListContainer);
         
-        ScrollPane scrollPane = new ScrollPane(questionsList);
+        ScrollPane scrollPane = new ScrollPane(questionsListContainer);
         scrollPane.setFitToWidth(true);
         scrollPane.setStyle("-fx-background-color: #121212; -fx-border-color: transparent;");
         
@@ -238,37 +297,111 @@ public class PeerQMainApplication extends Application {
     
     private void loadQuestionsFromDatabase(VBox questionsList) {
         try {
-            List<Question> questions = questionDAO.getAllQuestions();
+            allQuestions = questionDAO.getAllQuestions();
             
-            if (questions.isEmpty()) {
-                // Show sample questions if database is empty
-                questionsList.getChildren().addAll(
-                    createQuestionCard("How to prepare for final exams?", 
-                        "I'm struggling with time management for my final exams. Any tips?",
-                        "Academics", "5 answers", "9 June 2025 10:42"),
-                    createQuestionCard("Best places to study on campus?",
-                        "Looking for quiet places to study during exam season.",
-                        "Campus Life", "3 answers", "9 June 2025 08:15")
-                );
-            } else {
-                // Show real questions from database
-                for (Question question : questions) {
-                    questionsList.getChildren().add(
-                        createQuestionCardFromDB(question)
-                    );
-                }
+            if (allQuestions.isEmpty()) {
+                // Create sample questions if database is empty
+                allQuestions = createSampleQuestions();
             }
+            
+            // Display questions
+            displayQuestions(allQuestions, questionsList);
+            
         } catch (Exception e) {
             System.err.println("Error loading questions: " + e.getMessage());
             // Fallback to sample questions
-            questionsList.getChildren().addAll(
-                createQuestionCard("How to prepare for final exams?", 
-                    "I'm struggling with time management for my final exams. Any tips?",
-                    "Academics", "5 answers", "9 June 2025 10:42"),
-                createQuestionCard("Best places to study on campus?",
-                    "Looking for quiet places to study during exam season.",
-                    "Campus Life", "3 answers", "9 June 2025 08:15")
-            );
+            allQuestions = createSampleQuestions();
+            displayQuestions(allQuestions, questionsList);
+        }
+    }
+    
+    private List<Question> createSampleQuestions() {
+        List<Question> sampleQuestions = new ArrayList<>();
+        
+        // Sample question 1
+        Question q1 = new Question();
+        q1.setId(1);
+        q1.setTitle("How to prepare for final exams?");
+        q1.setBody("I'm struggling with time management for my final exams. Any tips?");
+        q1.setCategory("Academics");
+        q1.setUserName("John Doe");
+        q1.setCreatedAt("2025-06-09 10:42:00");
+        q1.setAnswerCount(5);
+        sampleQuestions.add(q1);
+        
+        // Sample question 2
+        Question q2 = new Question();
+        q2.setId(2);
+        q2.setTitle("Best places to study on campus?");
+        q2.setBody("Looking for quiet places to study during exam season.");
+        q2.setCategory("Campus Life");
+        q2.setUserName("Jane Smith");
+        q2.setCreatedAt("2025-06-09 08:15:00");
+        q2.setAnswerCount(3);
+        sampleQuestions.add(q2);
+        
+        // Sample question 3
+        Question q3 = new Question();
+        q3.setId(3);
+        q3.setTitle("Career advice for computer science students");
+        q3.setBody("What are the best career paths for CS students after graduation?");
+        q3.setCategory("Career");
+        q3.setUserName("Mike Johnson");
+        q3.setCreatedAt("2025-06-08 14:30:00");
+        q3.setAnswerCount(7);
+        sampleQuestions.add(q3);
+        
+        // Sample question 4
+        Question q4 = new Question();
+        q4.setId(4);
+        q4.setTitle("Best programming languages to learn in 2025");
+        q4.setBody("Which programming languages are most in demand for job market?");
+        q4.setCategory("Technology");
+        q4.setUserName("Sarah Wilson");
+        q4.setCreatedAt("2025-06-08 16:45:00");
+        q4.setAnswerCount(12);
+        sampleQuestions.add(q4);
+        
+        return sampleQuestions;
+    }
+    
+    private void filterQuestions() {
+        if (questionsListContainer == null) return;
+        
+        String searchText = searchField.getText().toLowerCase().trim();
+        String selectedCategory = categoryFilter.getValue();
+        
+        List<Question> filteredQuestions = new ArrayList<>();
+        
+        for (Question question : allQuestions) {
+            boolean matchesSearch = searchText.isEmpty() || 
+                question.getTitle().toLowerCase().contains(searchText) ||
+                question.getBody().toLowerCase().contains(searchText) ||
+                question.getUserName().toLowerCase().contains(searchText);
+            
+            boolean matchesCategory = "All Categories".equals(selectedCategory) || 
+                selectedCategory.equals(question.getCategory());
+            
+            if (matchesSearch && matchesCategory) {
+                filteredQuestions.add(question);
+            }
+        }
+        
+        // Clear and repopulate the questions list
+        questionsListContainer.getChildren().clear();
+        displayQuestions(filteredQuestions, questionsListContainer);
+    }
+    
+    private void displayQuestions(List<Question> questions, VBox container) {
+        if (questions.isEmpty()) {
+            Label noResultsLabel = new Label("No questions found matching your criteria.");
+            noResultsLabel.setStyle("-fx-text-fill: #E0E0E0; -fx-font-size: 16px;");
+            noResultsLabel.setAlignment(Pos.CENTER);
+            container.getChildren().add(noResultsLabel);
+        } else {
+            for (Question question : questions) {
+                container.getChildren().add(createQuestionCardFromDB(question));
+            }
         }
     }
     
@@ -429,7 +562,67 @@ public class PeerQMainApplication extends Application {
         Button submitButton = new Button("Submit Answer");
         submitButton.getStyleClass().add("button");
         
-        answerForm.getChildren().addAll(formTitle, answerInput, submitButton);
+        // Add proper spacing and alignment for the submit button
+        HBox submitButtonContainer = new HBox();
+        submitButtonContainer.setAlignment(Pos.CENTER_RIGHT);
+        submitButtonContainer.setPadding(new Insets(10, 0, 0, 0));
+        submitButtonContainer.getChildren().add(submitButton);
+        
+        answerForm.getChildren().addAll(formTitle, answerInput, submitButtonContainer);
+        
+        // Add event handler for submit answer
+        submitButton.setOnAction(e -> {
+            String answerContent = answerInput.getText().trim();
+            
+            // Validation
+            if (answerContent.isEmpty()) {
+                showAlert("Error", "Please enter your answer");
+                return;
+            }
+            
+            if (currentUser == null) {
+                showAlert("Error", "Please log in to submit an answer");
+                showLogin();
+                return;
+            }
+            
+            if (question == null) {
+                showAlert("Error", "Question not found");
+                return;
+            }
+            
+            try {
+                // Create new answer
+                Answer newAnswer = new Answer();
+                newAnswer.setQuestionId(question.getId());
+                newAnswer.setUserId(currentUser.getId());
+                newAnswer.setContent(answerContent);
+                newAnswer.setUserName(currentUser.getName());
+                newAnswer.setCreatedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                newAnswer.setUpvotes(0);
+                newAnswer.setAccepted(false);
+                newAnswer.setAnonymous(false);
+                
+                // Save to database
+                boolean success = answerDAO.createAnswer(newAnswer);
+                
+                if (success) {
+                    showAlert("Success", "Answer submitted successfully!");
+                    
+                    // Clear form
+                    answerInput.clear();
+                    
+                    // Refresh the question detail view to show the new answer
+                    showQuestionDetail(question);
+                } else {
+                    showAlert("Error", "Failed to submit answer. Please try again.");
+                }
+                
+            } catch (Exception ex) {
+                System.err.println("Error submitting answer: " + ex.getMessage());
+                showAlert("Error", "Failed to submit answer: " + ex.getMessage());
+            }
+        });
         
         panel.getChildren().addAll(backButton, questionContent, answersTitle, answersList, answerForm);
         return panel;
@@ -523,8 +716,72 @@ public class PeerQMainApplication extends Application {
         
         // Add event handlers
         postButton.setOnAction(e -> {
-            // TODO: Implement question posting to database
-            showQuestionList();
+            String questionTitle = titleField.getText().trim();
+            String questionDetails = detailsArea.getText().trim();
+            String selectedCategory = categoryCombo.getValue();
+            String tags = tagsField.getText().trim();
+            
+            // Validation
+            if (questionTitle.isEmpty()) {
+                showAlert("Error", "Please enter a question title");
+                return;
+            }
+            
+            if (questionDetails.isEmpty()) {
+                showAlert("Error", "Please enter question details");
+                return;
+            }
+            
+            if ("Select a category".equals(selectedCategory)) {
+                showAlert("Error", "Please select a category");
+                return;
+            }
+            
+            if (currentUser == null) {
+                showAlert("Error", "Please log in to post a question");
+                showLogin();
+                return;
+            }
+            
+            try {
+                // Create new question
+                Question newQuestion = new Question();
+                newQuestion.setTitle(questionTitle);
+                newQuestion.setBody(questionDetails);
+                newQuestion.setCategory(selectedCategory);
+                newQuestion.setUserId(currentUser.getId());
+                newQuestion.setUserName(currentUser.getName());
+                newQuestion.setCreatedAt(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                newQuestion.setAnswerCount(0);
+                
+                // Save to database
+                boolean success = questionDAO.createQuestion(newQuestion);
+                
+                if (success) {
+                    showAlert("Success", "Question posted successfully!");
+                    
+                    // Clear form
+                    titleField.clear();
+                    detailsArea.clear();
+                    categoryCombo.setValue("Select a category");
+                    tagsField.clear();
+                    
+                    // Refresh questions list
+                    allQuestions = questionDAO.getAllQuestions();
+                    if (questionsListContainer != null) {
+                        filterQuestions();
+                    }
+                    
+                    // Return to question list
+                    showQuestionList();
+                } else {
+                    showAlert("Error", "Failed to post question. Please try again.");
+                }
+                
+            } catch (Exception ex) {
+                System.err.println("Error posting question: " + ex.getMessage());
+                showAlert("Error", "Failed to post question: " + ex.getMessage());
+            }
         });
         cancelButton.setOnAction(e -> showQuestionList());
         
@@ -552,6 +809,11 @@ public class PeerQMainApplication extends Application {
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Enter your password");
         
+        // Error label for displaying login errors
+        Label errorLabel = new Label("");
+        errorLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12px;");
+        errorLabel.setVisible(false);
+        
         Button loginButton = new Button("Log In");
         loginButton.getStyleClass().add("button");
         
@@ -568,14 +830,50 @@ public class PeerQMainApplication extends Application {
         
         loginForm.getChildren().addAll(
             loginTitle, emailLabel, emailField,
-            passwordLabel, passwordField, loginButton,
+            passwordLabel, passwordField, errorLabel, loginButton,
             registerLink
         );
         
         // Add event handlers
         loginButton.setOnAction(e -> {
-            // TODO: Implement login logic
-            showQuestionList();
+            String email = emailField.getText().trim();
+            String password = passwordField.getText();
+            
+            if (email.isEmpty() || password.isEmpty()) {
+                errorLabel.setText("Please enter both email and password");
+                errorLabel.setVisible(true);
+                return;
+            }
+            
+            try {
+                // Attempt to authenticate user
+                User user = userDAO.authenticateUser(email, password);
+                if (user != null) {
+                    currentUser = user;
+                    errorLabel.setVisible(false);
+                    System.out.println("User logged in: " + user.getName());
+                    
+                    // Update header to show user info
+                    updateHeaderForLoggedInUser();
+                    
+                    // Return to question list
+                    showQuestionList();
+                } else {
+                    errorLabel.setText("Invalid email or password");
+                    errorLabel.setVisible(true);
+                }
+            } catch (Exception ex) {
+                System.err.println("Login error: " + ex.getMessage());
+                errorLabel.setText("Login failed. Please try again.");
+                errorLabel.setVisible(true);
+            }
+        });
+        
+        // Handle Enter key press
+        passwordField.setOnKeyPressed(event -> {
+            if (event.getCode().toString().equals("ENTER")) {
+                loginButton.fire();
+            }
         });
         
         Hyperlink registerLinkNode = (Hyperlink) registerLink.getChildren().get(1);
@@ -614,6 +912,16 @@ public class PeerQMainApplication extends Application {
         PasswordField confirmPasswordField = new PasswordField();
         confirmPasswordField.setPromptText("Confirm your password");
         
+        // Error label for displaying registration errors
+        Label errorLabel = new Label("");
+        errorLabel.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12px;");
+        errorLabel.setVisible(false);
+        
+        // Success label for displaying registration success
+        Label successLabel = new Label("");
+        successLabel.setStyle("-fx-text-fill: #00FF7F; -fx-font-size: 12px;");
+        successLabel.setVisible(false);
+        
         Button registerButton = new Button("Register");
         registerButton.getStyleClass().add("button");
         
@@ -633,13 +941,92 @@ public class PeerQMainApplication extends Application {
             regEmailLabel, regEmailField,
             regPasswordLabel, regPasswordField,
             confirmPasswordLabel, confirmPasswordField,
-            registerButton, loginLink
+            errorLabel, successLabel, registerButton, loginLink
         );
         
         // Add event handlers
         registerButton.setOnAction(e -> {
-            // TODO: Implement registration logic
-            showQuestionList();
+            String name = nameField.getText().trim();
+            String email = regEmailField.getText().trim();
+            String password = regPasswordField.getText();
+            String confirmPassword = confirmPasswordField.getText();
+            
+            // Clear previous messages
+            errorLabel.setVisible(false);
+            successLabel.setVisible(false);
+            
+            // Validation
+            if (name.isEmpty() || email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
+                errorLabel.setText("Please fill in all fields");
+                errorLabel.setVisible(true);
+                return;
+            }
+            
+            if (!email.endsWith("@galgotiasuniversity.ac.in")) {
+                errorLabel.setText("Please use your Galgotias University email address");
+                errorLabel.setVisible(true);
+                return;
+            }
+            
+            if (password.length() < 6) {
+                errorLabel.setText("Password must be at least 6 characters long");
+                errorLabel.setVisible(true);
+                return;
+            }
+            
+            if (!password.equals(confirmPassword)) {
+                errorLabel.setText("Passwords do not match");
+                errorLabel.setVisible(true);
+                return;
+            }
+            
+            try {
+                // Check if user already exists
+                if (userDAO.getUserByEmail(email) != null) {
+                    errorLabel.setText("User with this email already exists");
+                    errorLabel.setVisible(true);
+                    return;
+                }
+                
+                // Create new user
+                User newUser = new User();
+                newUser.setName(name);
+                newUser.setEmail(email);
+                newUser.setPassword(password); // Note: In production, this should be hashed
+                
+                userDAO.createUser(newUser);
+                
+                successLabel.setText("Registration successful! You can now log in.");
+                successLabel.setVisible(true);
+                
+                // Clear form
+                nameField.clear();
+                regEmailField.clear();
+                regPasswordField.clear();
+                confirmPasswordField.clear();
+                
+                // Auto-switch to login after 2 seconds
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(2000);
+                        javafx.application.Platform.runLater(() -> showLogin());
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                }).start();
+                
+            } catch (Exception ex) {
+                System.err.println("Registration error: " + ex.getMessage());
+                errorLabel.setText("Registration failed. Please try again.");
+                errorLabel.setVisible(true);
+            }
+        });
+        
+        // Handle Enter key press
+        confirmPasswordField.setOnKeyPressed(event -> {
+            if (event.getCode().toString().equals("ENTER")) {
+                registerButton.fire();
+            }
         });
         
         Hyperlink loginLinkNode = (Hyperlink) loginLink.getChildren().get(1);
@@ -655,6 +1042,11 @@ public class PeerQMainApplication extends Application {
         askQuestion.setVisible(false);
         loginPanel.setVisible(false);
         registerPanel.setVisible(false);
+        
+        // Refresh questions if needed
+        if (questionsListContainer != null) {
+            filterQuestions();
+        }
     }
     
     private void showQuestionDetail() {
@@ -668,10 +1060,15 @@ public class PeerQMainApplication extends Application {
         loginPanel.setVisible(false);
         registerPanel.setVisible(false);
         
-        // Remove old question detail and create new one
+        // Create a new question detail panel for this specific question
+        VBox newQuestionDetail = createQuestionDetail(question);
+        
+        // Remove old question detail if it exists
         mainContent.getChildren().remove(questionDetail);
-        questionDetail = createQuestionDetail(question);
-        mainContent.getChildren().add(questionDetail);
+        
+        // Add the new question detail and update the reference
+        mainContent.getChildren().add(newQuestionDetail);
+        questionDetail = newQuestionDetail;
         
         questionDetail.setVisible(true);
     }
@@ -685,19 +1082,55 @@ public class PeerQMainApplication extends Application {
     }
     
     private void showLogin() {
+        System.out.println("showLogin() called - setting login panel visible");
         questionList.setVisible(false);
         questionDetail.setVisible(false);
         askQuestion.setVisible(false);
         loginPanel.setVisible(true);
         registerPanel.setVisible(false);
+        System.out.println("Login panel visible: " + loginPanel.isVisible());
     }
     
     private void showRegister() {
+        System.out.println("showRegister() called - setting register panel visible");
         questionList.setVisible(false);
         questionDetail.setVisible(false);
         askQuestion.setVisible(false);
         loginPanel.setVisible(false);
         registerPanel.setVisible(true);
+        System.out.println("Register panel visible: " + registerPanel.isVisible());
+    }
+    
+    private void logout() {
+        System.out.println("Logout button clicked in header");
+        currentUser = null;
+        updateHeaderForLoggedOutUser();
+        showLogin();
+    }
+    
+    private void updateHeaderForLoggedInUser() {
+        // Hide login/register buttons and show user info and logout button
+        authButtons.setVisible(false);
+        userLabel.setVisible(true);
+        logoutBtn.setVisible(true);
+        userLabel.setText("Welcome, " + currentUser.getName() + "!");
+        System.out.println("Header updated for logged in user: " + currentUser.getName());
+    }
+    
+    private void updateHeaderForLoggedOutUser() {
+        // Show login/register buttons and hide user info and logout button
+        authButtons.setVisible(true);
+        userLabel.setVisible(false);
+        logoutBtn.setVisible(false);
+        System.out.println("Header updated for logged out user");
+    }
+    
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
     
     public static void main(String[] args) {
