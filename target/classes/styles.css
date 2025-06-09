@@ -37,9 +37,14 @@
     -fx-background-color: transparent;
     -fx-text-fill: #00FF7F;
     -fx-font-size: 14px;
-    -fx-padding: 4px 12px;
+    -fx-font-weight: 500;
+    -fx-padding: 6px 12px;
     -fx-cursor: hand;
     -fx-transition: all 0.15s ease;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-pref-width: 80px;
+    -fx-pref-height: 32px;
 }
 
 .text-button:hover {
@@ -61,7 +66,8 @@
 
 .text-field:focused, .text-area:focused, .password-field:focused {
     -fx-border-color: #00FF7F;
-    -fx-effect: dropshadow(gaussian, rgba(0, 255, 127, 0.2), 2, 0, 0, 0);
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 255, 127, 0.3), 4, 0, 0, 0);
 }
 
 .text-field .prompt-text, .text-area .prompt-text, .password-field .prompt-text {
@@ -173,13 +179,13 @@
 }
 
 .scroll-bar:vertical .thumb {
-    -fx-background-color: #444444;
+    -fx-background-color: #666666;
     -fx-background-radius: 6px;
     -fx-transition: all 0.15s ease;
 }
 
 .scroll-bar:vertical .thumb:hover {
-    -fx-background-color: #666666;
+    -fx-background-color: #888888;
 }
 
 .scroll-bar:vertical .increment-button,
@@ -290,15 +296,15 @@
 }
 
 .error {
-    -fx-text-fill: #FF4500;
-    -fx-background-color: rgba(255, 69, 0, 0.1);
-    -fx-border-color: #FF4500;
+    -fx-text-fill: #FF6B6B;
+    -fx-background-color: rgba(255, 107, 107, 0.1);
+    -fx-border-color: #FF6B6B;
 }
 
 .warning {
-    -fx-text-fill: #FF5722;
-    -fx-background-color: rgba(255, 87, 34, 0.1);
-    -fx-border-color: #FF5722;
+    -fx-text-fill: #FFA500;
+    -fx-background-color: rgba(255, 165, 0, 0.1);
+    -fx-border-color: #FFA500;
 }
 
 /* Question Title Styling */
@@ -310,7 +316,7 @@
 
 /* Question Meta Styling */
 .question-meta {
-    -fx-text-fill: #B0B0B0;
+    -fx-text-fill: #CCCCCC;
     -fx-font-size: 12px;
 }
 
@@ -371,10 +377,15 @@
     -fx-background-color: transparent;
     -fx-text-fill: #FF6B6B;
     -fx-font-size: 14px;
-    -fx-padding: 4px 12px;
+    -fx-font-weight: 500;
+    -fx-padding: 6px 12px;
     -fx-cursor: hand;
     -fx-transition: all 0.15s ease;
     -fx-border: none;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-pref-width: 80px;
+    -fx-pref-height: 32px;
 }
 
 .logout-button:hover {
@@ -388,5 +399,92 @@
     -fx-text-fill: #00FF7F;
     -fx-font-size: 14px;
     -fx-font-weight: 600;
-    -fx-padding: 4px 12px;
+    -fx-padding: 4px 8px;
+    -fx-background-color: rgba(0, 255, 127, 0.1);
+    -fx-background-radius: 4px;
+}
+
+/* Keyboard shortcut hints */
+.shortcut-hint {
+    -fx-text-fill: #CCCCCC;
+    -fx-font-size: 11px;
+    -fx-font-style: italic;
+}
+
+/* Character counter styling */
+.char-counter {
+    -fx-text-fill: #CCCCCC;
+    -fx-font-size: 12px;
+    -fx-font-family: monospace;
+}
+
+.char-counter.warning {
+    -fx-text-fill: #FFA500;
+}
+
+.char-counter.error {
+    -fx-text-fill: #FF6B6B;
+}
+
+/* Improved focus indicators */
+.text-field:focused, .text-area:focused, .password-field:focused {
+    -fx-border-color: #00FF7F;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 255, 127, 0.3), 4, 0, 0, 0);
+}
+
+/* Better button states */
+.button:disabled {
+    -fx-background-color: #444444;
+    -fx-text-fill: #888888;
+    -fx-cursor: default;
+}
+
+/* Improved scrollbar visibility */
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #666666;
+    -fx-background-radius: 6px;
+    -fx-transition: all 0.15s ease;
+}
+
+.scroll-bar:vertical .thumb:hover {
+    -fx-background-color: #888888;
+}
+
+/* Better contrast for combo box text */
+.combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #E0E0E0;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: #1A1A1A;
+    -fx-text-fill: #E0E0E0;
+    -fx-padding: 8px 12px;
+}
+
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: #2A2A2A;
+    -fx-text-fill: #FFFFFF;
+}
+
+/* Better contrast for labels */
+.label {
+    -fx-text-fill: #E0E0E0;
+    -fx-font-size: 14px;
+}
+
+/* Better contrast for hyperlinks */
+.hyperlink {
+    -fx-text-fill: #00FF7F;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+    -fx-transition: all 0.15s ease;
+    -fx-border: none;
+    -fx-background-color: transparent;
+}
+
+.hyperlink:hover {
+    -fx-text-fill: #43B97F;
+    -fx-underline: true;
 } 

@@ -118,27 +118,29 @@ header {
     margin: 0 auto;
     padding: 0 1.5rem;
     display: flex;
-    justify-content: space-between;
     align-items: center;
     height: 100%;
+    gap: 2rem;
 }
 
 /* Logo */
 .logo {
     display: flex;
     align-items: center;
-    margin-right: 15px;
+    flex-shrink: 0;
 }
 
-.logo img {
-    height: 36px;
-    width: auto;
-    max-width: 120px;
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: -0.5px;
 }
 
 /* Main Navigation - Desktop */
 .main-navigation {
     display: flex;
+    flex-shrink: 0;
 }
 
 nav ul {
@@ -170,6 +172,8 @@ nav ul li a:hover {
 .auth-section {
     display: flex;
     align-items: center;
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .auth-section button {
@@ -777,6 +781,10 @@ footer {
         margin-bottom: 0;
     }
     
+    .logo-text {
+        font-size: 1.25rem;
+    }
+    
     /* Show mobile menu button */
     .mobile-menu-button {
         display: flex !important;
@@ -960,7 +968,7 @@ footer {
     width: 100%;
     padding: 0.75rem 1rem;
     padding-right: 3rem;
-    border-radius: 999px;
+    border-radius: 0px;
     border: 1px solid var(--border-color);
     background-color: var(--card-background);
     color: var(--text-color);

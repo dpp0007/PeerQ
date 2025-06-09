@@ -13,6 +13,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 
 // Import database-related classes
 import com.peerq.dao.QuestionDAO;
@@ -104,6 +106,42 @@ public class PeerQMainApplication extends Application {
             Scene scene = new Scene(root, 1200, 800);
             scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
             
+            // Add keyboard shortcuts for better navigation
+            scene.setOnKeyPressed(event -> {
+                switch (event.getCode()) {
+                    case F1:
+                        showQuestionList();
+                        break;
+                    case F2:
+                        if (currentUser != null) {
+                            showAskQuestion();
+                        } else {
+                            showAlert("Login Required", "Please log in to ask a question");
+                            showLogin();
+                        }
+                        break;
+                    case F3:
+                        if (searchField != null) {
+                            searchField.requestFocus();
+                        }
+                        break;
+                    case F4:
+                        if (currentUser == null) {
+                            showLogin();
+                        } else {
+                            logout();
+                        }
+                        break;
+                    case ESCAPE:
+                        if (questionDetail.isVisible()) {
+                            showQuestionList();
+                        } else if (askQuestion.isVisible()) {
+                            showQuestionList();
+                        }
+                        break;
+                }
+            });
+            
             // Configure stage
             primaryStage.setTitle("PeerQ - College Community Discourse Platform");
             primaryStage.setScene(scene);
@@ -166,9 +204,9 @@ public class PeerQMainApplication extends Application {
         header.getStyleClass().add("header");
         header.setPrefHeight(60);
         
-        // Logo
-        Label logo = new Label("PeerQ");
-        logo.getStyleClass().add("logo");
+        // Logo - Text instead of image
+        Label logoLabel = new Label("Peer Q");
+        logoLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: white; -fx-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;");
         
         // Navigation
         HBox nav = new HBox(20);
@@ -176,14 +214,25 @@ public class PeerQMainApplication extends Application {
         Button askQuestionBtn = createNavButton("Ask Question");
         nav.getChildren().addAll(homeBtn, askQuestionBtn);
         
-        // Search bar
+        // Search bar with icon
+        HBox searchContainer = new HBox(8);
+        searchContainer.setAlignment(Pos.CENTER_LEFT);
+        searchContainer.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-padding: 4px 8px;");
+        
+        // Search icon (using Unicode character)
+        Label searchIcon = new Label("🔍");
+        searchIcon.setStyle("-fx-text-fill: #B0B0B0; -fx-font-size: 14px;");
+        
         searchField = new TextField();
-        searchField.setPromptText("Search questions, topics, or users...");
-        searchField.setPrefWidth(300);
-        searchField.getStyleClass().add("search-field");
+        searchField.setPromptText("Search questions, topics, or users... (Press F3 to focus)");
+        searchField.setPrefWidth(280);
+        searchField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #E0E0E0; -fx-padding: 8px 0px;");
+        
+        searchContainer.getChildren().addAll(searchIcon, searchField);
         
         // Auth buttons
-        authButtons = new HBox(10);
+        authButtons = new HBox(8);
+        authButtons.setAlignment(Pos.CENTER_RIGHT);
         loginBtn = createTextButton("Log In");
         registerBtn = createTextButton("Register");
         authButtons.getChildren().addAll(loginBtn, registerBtn);
@@ -195,9 +244,11 @@ public class PeerQMainApplication extends Application {
         // Logout button
         logoutBtn = new Button("Logout");
         logoutBtn.getStyleClass().add("logout-button");
+        logoutBtn.setPrefWidth(80);
+        logoutBtn.setPrefHeight(32);
         
         // Add components to header
-        header.getChildren().addAll(logo, nav, searchField, authButtons, userLabel, logoutBtn);
+        header.getChildren().addAll(logoLabel, nav, searchContainer, authButtons, userLabel, logoutBtn);
         HBox.setHgrow(nav, Priority.ALWAYS);
         
         // Initialize header state (logged out)
@@ -242,6 +293,9 @@ public class PeerQMainApplication extends Application {
     private Button createTextButton(String text) {
         Button button = new Button(text);
         button.getStyleClass().add("text-button");
+        button.setPrefWidth(80);
+        button.setPrefHeight(32);
+        button.setStyle("-fx-background-color: transparent; -fx-text-fill: #00FF7F; -fx-font-size: 14px; -fx-font-weight: 500; -fx-padding: 6px 12px; -fx-cursor: hand; -fx-transition: all 0.15s ease; -fx-border-radius: 4px; -fx-background-radius: 4px;");
         return button;
     }
     
@@ -415,19 +469,19 @@ public class PeerQMainApplication extends Application {
         titleLabel.setStyle("-fx-text-fill: #00FF7F;");
         
         Label previewLabel = new Label(question.getBody());
-        previewLabel.setTextFill(Color.rgb(176, 176, 176));
+        previewLabel.setTextFill(Color.rgb(204, 204, 204));
         
         HBox meta = new HBox(10);
-        Label categoryLabel = new Label(question.getCategory());
-        categoryLabel.setTextFill(Color.rgb(106, 90, 205)); // Purple for category
-        
-        Label answersLabel = new Label(question.getAnswerCount() + " answers");
-        answersLabel.setTextFill(Color.rgb(176, 176, 176));
-        
-        Label timeLabel = new Label(formatDate(question.getCreatedAt()));
-        timeLabel.setTextFill(Color.rgb(176, 176, 176));
-        
-        meta.getChildren().addAll(categoryLabel, answersLabel, timeLabel);
+        meta.getChildren().addAll(
+            new Label("Posted by " + (question != null ? question.getUserName() : "John Doe")),
+            new Label(formatDate(question != null ? question.getCreatedAt() : "2 hours ago")),
+            new Label(question != null ? question.getCategory() : "Academics")
+        );
+        meta.getChildren().forEach(node -> {
+            if (node instanceof Label) {
+                ((Label) node).setTextFill(Color.rgb(204, 204, 204));
+            }
+        });
         
         card.getChildren().addAll(titleLabel, previewLabel, meta);
         
@@ -447,17 +501,17 @@ public class PeerQMainApplication extends Application {
         titleLabel.setStyle("-fx-text-fill: #00FF7F;");
         
         Label previewLabel = new Label(preview);
-        previewLabel.setTextFill(Color.rgb(176, 176, 176));
+        previewLabel.setTextFill(Color.rgb(204, 204, 204));
         
         HBox meta = new HBox(10);
         Label categoryLabel = new Label(category);
         categoryLabel.setTextFill(Color.rgb(106, 90, 205)); // Purple for category
         
         Label answersLabel = new Label(answers);
-        answersLabel.setTextFill(Color.rgb(176, 176, 176));
+        answersLabel.setTextFill(Color.rgb(204, 204, 204));
         
         Label timeLabel = new Label(time);
-        timeLabel.setTextFill(Color.rgb(176, 176, 176));
+        timeLabel.setTextFill(Color.rgb(204, 204, 204));
         
         meta.getChildren().addAll(categoryLabel, answersLabel, timeLabel);
         
@@ -497,7 +551,7 @@ public class PeerQMainApplication extends Application {
         );
         meta.getChildren().forEach(node -> {
             if (node instanceof Label) {
-                ((Label) node).setTextFill(Color.rgb(176, 176, 176));
+                ((Label) node).setTextFill(Color.rgb(204, 204, 204));
             }
         });
         
@@ -559,6 +613,25 @@ public class PeerQMainApplication extends Application {
         answerInput.setPrefRowCount(6);
         answerInput.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-text-fill: #E0E0E0; -fx-control-inner-background: #1A1A1A;");
         
+        // Add character limit feedback for answer
+        Label answerCharCount = new Label("0/5000");
+        answerCharCount.setStyle("-fx-text-fill: #CCCCCC; -fx-font-size: 12px;");
+        answerInput.textProperty().addListener((observable, oldValue, newValue) -> {
+            int length = newValue.length();
+            answerCharCount.setText(length + "/5000");
+            if (length > 4500) {
+                answerCharCount.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12px;");
+            } else if (length > 4000) {
+                answerCharCount.setStyle("-fx-text-fill: #FFA500; -fx-font-size: 12px;");
+            } else {
+                answerCharCount.setStyle("-fx-text-fill: #CCCCCC; -fx-font-size: 12px;");
+            }
+        });
+        
+        HBox answerFormHeader = new HBox(10);
+        answerFormHeader.setAlignment(Pos.CENTER_LEFT);
+        answerFormHeader.getChildren().addAll(formTitle, answerCharCount);
+        
         Button submitButton = new Button("Submit Answer");
         submitButton.getStyleClass().add("button");
         
@@ -568,7 +641,7 @@ public class PeerQMainApplication extends Application {
         submitButtonContainer.setPadding(new Insets(10, 0, 0, 0));
         submitButtonContainer.getChildren().add(submitButton);
         
-        answerForm.getChildren().addAll(formTitle, answerInput, submitButtonContainer);
+        answerForm.getChildren().addAll(answerFormHeader, answerInput, submitButtonContainer);
         
         // Add event handler for submit answer
         submitButton.setOnAction(e -> {
@@ -644,7 +717,7 @@ public class PeerQMainApplication extends Application {
         );
         meta.getChildren().forEach(node -> {
             if (node instanceof Label) {
-                ((Label) node).setTextFill(Color.rgb(176, 176, 176));
+                ((Label) node).setTextFill(Color.rgb(204, 204, 204));
             }
         });
         
@@ -673,6 +746,26 @@ public class PeerQMainApplication extends Application {
         Label titleLabel = new Label("Title");
         TextField titleField = new TextField();
         titleField.setPromptText("Enter your question title");
+        titleField.setPrefColumnCount(50);
+        
+        // Add character limit feedback
+        Label titleCharCount = new Label("0/100");
+        titleCharCount.setStyle("-fx-text-fill: #CCCCCC; -fx-font-size: 12px;");
+        titleField.textProperty().addListener((observable, oldValue, newValue) -> {
+            int length = newValue.length();
+            titleCharCount.setText(length + "/100");
+            if (length > 90) {
+                titleCharCount.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12px;");
+            } else if (length > 80) {
+                titleCharCount.setStyle("-fx-text-fill: #FFA500; -fx-font-size: 12px;");
+            } else {
+                titleCharCount.setStyle("-fx-text-fill: #CCCCCC; -fx-font-size: 12px;");
+            }
+        });
+        
+        HBox titleContainer = new HBox(10);
+        titleContainer.setAlignment(Pos.CENTER_LEFT);
+        titleContainer.getChildren().addAll(titleLabel, titleCharCount);
         
         // Details field
         Label detailsLabel = new Label("Details");
@@ -680,6 +773,25 @@ public class PeerQMainApplication extends Application {
         detailsArea.setPromptText("Provide more details about your question");
         detailsArea.setPrefRowCount(8);
         detailsArea.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-text-fill: #E0E0E0; -fx-control-inner-background: #1A1A1A;");
+        
+        // Add character limit feedback for details
+        Label detailsCharCount = new Label("0/2000");
+        detailsCharCount.setStyle("-fx-text-fill: #CCCCCC; -fx-font-size: 12px;");
+        detailsArea.textProperty().addListener((observable, oldValue, newValue) -> {
+            int length = newValue.length();
+            detailsCharCount.setText(length + "/2000");
+            if (length > 1800) {
+                detailsCharCount.setStyle("-fx-text-fill: #FF6B6B; -fx-font-size: 12px;");
+            } else if (length > 1600) {
+                detailsCharCount.setStyle("-fx-text-fill: #FFA500; -fx-font-size: 12px;");
+            } else {
+                detailsCharCount.setStyle("-fx-text-fill: #CCCCCC; -fx-font-size: 12px;");
+            }
+        });
+        
+        HBox detailsContainer = new HBox(10);
+        detailsContainer.setAlignment(Pos.CENTER_LEFT);
+        detailsContainer.getChildren().addAll(detailsLabel, detailsCharCount);
         
         // Category dropdown
         Label categoryLabel = new Label("Category");
@@ -705,8 +817,8 @@ public class PeerQMainApplication extends Application {
         buttons.getChildren().addAll(postButton, cancelButton);
         
         form.getChildren().addAll(
-            titleLabel, titleField,
-            detailsLabel, detailsArea,
+            titleContainer, titleField,
+            detailsContainer, detailsArea,
             categoryLabel, categoryCombo,
             tagsLabel, tagsField,
             buttons
@@ -806,8 +918,49 @@ public class PeerQMainApplication extends Application {
         emailField.setPromptText("Enter your email");
         
         Label passwordLabel = new Label("Password");
+        HBox passwordContainer = new HBox(0);
+        passwordContainer.setAlignment(Pos.CENTER_LEFT);
+        passwordContainer.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-border-radius: 4px; -fx-padding: 4px 8px;");
+        
         PasswordField passwordField = new PasswordField();
         passwordField.setPromptText("Enter your password");
+        passwordField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #E0E0E0; -fx-padding: 8px 0px;");
+        passwordField.setPrefWidth(250);
+        
+        // Password visibility toggle button
+        Button togglePasswordBtn = new Button("👁");
+        togglePasswordBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #B0B0B0; -fx-font-size: 18px; -fx-cursor: hand; -fx-padding: 4px; -fx-min-width: 24px; -fx-max-width: 24px; -fx-min-height: 24px; -fx-max-height: 24px;");
+        togglePasswordBtn.setOnAction(e -> {
+            if (passwordField.getText().isEmpty()) return;
+            
+            // Create a temporary text field to show password
+            TextField tempField = new TextField(passwordField.getText());
+            tempField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #E0E0E0; -fx-padding: 8px 0px;");
+            tempField.setPrefWidth(250);
+            
+            // Replace password field with text field
+            passwordContainer.getChildren().set(0, tempField);
+            togglePasswordBtn.setText("🙈");
+            
+            // Auto-hide after 3 seconds
+            new Thread(() -> {
+                try {
+                    Thread.sleep(3000);
+                    javafx.application.Platform.runLater(() -> {
+                        passwordContainer.getChildren().set(0, passwordField);
+                        togglePasswordBtn.setText("👁");
+                    });
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
+        });
+        
+        // Create a spacer to push the icon to the right
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        
+        passwordContainer.getChildren().addAll(passwordField, spacer, togglePasswordBtn);
         
         // Error label for displaying login errors
         Label errorLabel = new Label("");
@@ -824,13 +977,13 @@ public class PeerQMainApplication extends Application {
         );
         registerLink.getChildren().forEach(node -> {
             if (node instanceof Label) {
-                ((Label) node).setTextFill(Color.rgb(176, 176, 176));
+                ((Label) node).setTextFill(Color.rgb(204, 204, 204));
             }
         });
         
         loginForm.getChildren().addAll(
             loginTitle, emailLabel, emailField,
-            passwordLabel, passwordField, errorLabel, loginButton,
+            passwordLabel, passwordContainer, errorLabel, loginButton,
             registerLink
         );
         
@@ -905,12 +1058,88 @@ public class PeerQMainApplication extends Application {
         regEmailField.setPromptText("username@galgotiasuniversity.ac.in");
         
         Label regPasswordLabel = new Label("Password");
+        HBox regPasswordContainer = new HBox(0);
+        regPasswordContainer.setAlignment(Pos.CENTER_LEFT);
+        regPasswordContainer.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-border-radius: 4px; -fx-padding: 4px 8px;");
+        
         PasswordField regPasswordField = new PasswordField();
         regPasswordField.setPromptText("Enter your password");
+        regPasswordField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #E0E0E0; -fx-padding: 8px 0px;");
+        regPasswordField.setPrefWidth(250);
+        
+        // Password visibility toggle button for registration
+        Button toggleRegPasswordBtn = new Button("👁");
+        toggleRegPasswordBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #B0B0B0; -fx-font-size: 18px; -fx-cursor: hand; -fx-padding: 4px; -fx-min-width: 24px; -fx-max-width: 24px; -fx-min-height: 24px; -fx-max-height: 24px;");
+        toggleRegPasswordBtn.setOnAction(e -> {
+            if (regPasswordField.getText().isEmpty()) return;
+            
+            TextField tempField = new TextField(regPasswordField.getText());
+            tempField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #E0E0E0; -fx-padding: 8px 0px;");
+            tempField.setPrefWidth(250);
+            
+            regPasswordContainer.getChildren().set(0, tempField);
+            toggleRegPasswordBtn.setText("🙈");
+            
+            new Thread(() -> {
+                try {
+                    Thread.sleep(3000);
+                    javafx.application.Platform.runLater(() -> {
+                        regPasswordContainer.getChildren().set(0, regPasswordField);
+                        toggleRegPasswordBtn.setText("👁");
+                    });
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
+        });
+        
+        // Create a spacer to push the icon to the right
+        Region regSpacer = new Region();
+        HBox.setHgrow(regSpacer, Priority.ALWAYS);
+        
+        regPasswordContainer.getChildren().addAll(regPasswordField, regSpacer, toggleRegPasswordBtn);
         
         Label confirmPasswordLabel = new Label("Confirm Password");
+        HBox confirmPasswordContainer = new HBox(0);
+        confirmPasswordContainer.setAlignment(Pos.CENTER_LEFT);
+        confirmPasswordContainer.setStyle("-fx-background-color: #1A1A1A; -fx-border-color: #444444; -fx-border-radius: 4px; -fx-padding: 4px 8px;");
+        
         PasswordField confirmPasswordField = new PasswordField();
         confirmPasswordField.setPromptText("Confirm your password");
+        confirmPasswordField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #E0E0E0; -fx-padding: 8px 0px;");
+        confirmPasswordField.setPrefWidth(250);
+        
+        // Password visibility toggle button for confirm password
+        Button toggleConfirmPasswordBtn = new Button("👁");
+        toggleConfirmPasswordBtn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #B0B0B0; -fx-font-size: 18px; -fx-cursor: hand; -fx-padding: 4px; -fx-min-width: 24px; -fx-max-width: 24px; -fx-min-height: 24px; -fx-max-height: 24px;");
+        toggleConfirmPasswordBtn.setOnAction(e -> {
+            if (confirmPasswordField.getText().isEmpty()) return;
+            
+            TextField tempField = new TextField(confirmPasswordField.getText());
+            tempField.setStyle("-fx-background-color: transparent; -fx-border-color: transparent; -fx-text-fill: #E0E0E0; -fx-padding: 8px 0px;");
+            tempField.setPrefWidth(250);
+            
+            confirmPasswordContainer.getChildren().set(0, tempField);
+            toggleConfirmPasswordBtn.setText("🙈");
+            
+            new Thread(() -> {
+                try {
+                    Thread.sleep(3000);
+                    javafx.application.Platform.runLater(() -> {
+                        confirmPasswordContainer.getChildren().set(0, confirmPasswordField);
+                        toggleConfirmPasswordBtn.setText("👁");
+                    });
+                } catch (InterruptedException ex) {
+                    Thread.currentThread().interrupt();
+                }
+            }).start();
+        });
+        
+        // Create a spacer to push the icon to the right
+        Region confirmSpacer = new Region();
+        HBox.setHgrow(confirmSpacer, Priority.ALWAYS);
+        
+        confirmPasswordContainer.getChildren().addAll(confirmPasswordField, confirmSpacer, toggleConfirmPasswordBtn);
         
         // Error label for displaying registration errors
         Label errorLabel = new Label("");
@@ -932,15 +1161,15 @@ public class PeerQMainApplication extends Application {
         );
         loginLink.getChildren().forEach(node -> {
             if (node instanceof Label) {
-                ((Label) node).setTextFill(Color.rgb(176, 176, 176));
+                ((Label) node).setTextFill(Color.rgb(204, 204, 204));
             }
         });
         
         registerForm.getChildren().addAll(
             registerTitle, nameLabel, nameField,
             regEmailLabel, regEmailField,
-            regPasswordLabel, regPasswordField,
-            confirmPasswordLabel, confirmPasswordField,
+            regPasswordLabel, regPasswordContainer,
+            confirmPasswordLabel, confirmPasswordContainer,
             errorLabel, successLabel, registerButton, loginLink
         );
         
@@ -1131,6 +1360,14 @@ public class PeerQMainApplication extends Application {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+    
+    private void showLoadingAlert(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Please Wait");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.setResult(ButtonType.CANCEL);
     }
     
     public static void main(String[] args) {
