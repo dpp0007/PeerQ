@@ -272,7 +272,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Project Link**: [https://github.com/your-username/peerq-community-platform](https://github.com/your-username/peerq-community-platform)
 - **Issues**: [GitHub Issues](https://github.com/your-username/peerq-community-platform/issues)
-- **Email**: peerq@galgotiasuniversity.ac.in
+- **Email**: deepankarpatel28@gmail.com
 
 ---
 
